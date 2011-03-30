@@ -26,7 +26,8 @@ use C4::Biblio;
 use C4::AuthoritiesMarc::MARC21;
 use C4::AuthoritiesMarc::UNIMARC;
 use C4::Charset;
-use List::MoreUtils qw/none first_index/;
+use Storable;
+use List::MoreUtils qw/any none/;
 use C4::Debug;
 use C4::Search::Query;
 require C4::Search;
@@ -513,9 +514,9 @@ sub ModAuthority {
         }
 
         my $filename = $cgidir . "/tmp/modified_authorities/$authid.authid";
-        open AUTH, "> $filename";
-        print AUTH $authid;
-        close AUTH;
+        unless (-e $filename){
+	    store $oldrecord, "$filename";
+	}
     }
     C4::Search::IndexRecord("authority", [ $authid ] );
     return $authid;
@@ -1096,12 +1097,65 @@ Then we should add some new parameter : bibliotargettag, authtargettag
 
 =cut
 
+
+# Test if a subfield exist in a subfield list
+sub _test_subfcode_presence{
+    my ($subfields,$subfcode)=@_;
+    return grep{$_->[0] eq $subfcode} @$subfields;
+}
+
+sub _test_string{
+    my ($string,@fields)=@_;
+    my $return=0;
+    for my $field (@fields) {
+        if (grep {$_->[1] =~/$string/i} $field->subfields){
+            $return=1;
+            last; 
+        }
+    }
+    return $return;
+}
+
+sub _process_subfcode_4_merge{
+    my ($tagfield,$bibliosubfields,$authorityrecord, $authoritysubfields)=@_;
+    return unless (uc(C4::Context->preference('marcflavour')) eq 'UNIMARC');
+    if (   $tagfield eq "606"
+        or $tagfield eq "600"
+        or $tagfield eq "607"
+        or $tagfield eq "700"
+        or $tagfield eq "701"
+        or $tagfield eq "702"
+        or $tagfield eq "710"
+        or $tagfield eq "711"
+        or $tagfield eq "712"
+        ) {
+        my $authtypecode = GuessAuthTypeCode($authorityrecord); 
+        my $authtag = GetAuthType($authtypecode);
+        my $chronological_auth
+            = _test_string( 'chronologique', $authorityrecord->field('3..') );
+        my $subfz_absent
+            = not _test_subfcode_presence( $authoritysubfields, 'z' );
+        if ( _test_subfcode_presence( $bibliosubfields, "a" ) ) {
+            if ( $authtag->{'auth_type_code'} eq '215' and $tagfield ne "607") {
+                return "y";
+            } elsif ( $chronological_auth and $subfz_absent ) {
+                return "z";
+            } else {
+                return "x";
+            }
+        }
+        return;
+    }
+    return;
+}
+
 sub merge {
     my ( $mergefrom, $MARCfrom, $mergeto, $MARCto ) = @_;
-    my ( $counteditedbiblio, $countunmodifiedbiblio, $counterrors ) = ( 0, 0, 0 );
     my $dbh              = C4::Context->dbh;
     my $authtypecodefrom = GetAuthTypeCode($mergefrom);
     my $authtypecodeto   = GetAuthTypeCode($mergeto);
+    $MARCfrom ||=GetAuthority($mergefrom);
+    $MARCto   ||=GetAuthority($mergeto);
 
     #     warn "mergefrom : $authtypecodefrom $mergefrom mergeto : $authtypecodeto $mergeto ";
     # return if authority does not exist
@@ -1117,6 +1171,7 @@ sub merge {
 
     my @record_to;
     @record_to = grep {$_->[0]!~/[0-9]/} $MARCto->field($auth_tag_to_report_to)->subfields() if $MARCto->field($auth_tag_to_report_to);
+    $debug and warn 'champs a fusionner',Data::Dumper::Dumper(@record_to);
     my $field_to;
     $field_to = $MARCto->field($auth_tag_to_report_to) if $MARCto->field($auth_tag_to_report_to);
     my @record_from;
@@ -1124,13 +1179,17 @@ sub merge {
 
 
     my @reccache;
+    my @edited_biblios;
 
     # search all biblio tags using this authority.
     #Getting marcbiblios impacted by the change.
-    my $query = C4::Search::Query->normalSearch("an=$mergefrom");
+    my $query = C4::Search::Query->normalSearch(qq{an=$mergefrom});
     my $results = C4::Search::SimpleSearch($query);
 
-    $debug && warn scalar(@{$results->{items}});
+    if ($results->{error}){
+        die $results->{error};
+    }
+    $debug and warn scalar(@{$results->{items}});
 
     foreach my $rawrecord( @{$results->{items}} ) {
         my $marcrecord = GetMarcBiblio($rawrecord->{values}->{recordid});
@@ -1141,143 +1200,120 @@ sub merge {
     #warn scalar(@reccache)." biblios to update";
     # Get All candidate Tags for the change
     # (This will reduce the search scope in marc records).
-    $sth = $dbh->prepare("select distinct tagfield from marc_subfield_structure where authtypecode=?");
-    $sth->execute($authtypecodefrom);
+    $sth = $dbh->prepare("select distinct tagfield from marc_subfield_structure where authtypecode<>''");
+    $sth->execute();
     my @tags_using_authtype;
     while ( my ($tagfield) = $sth->fetchrow ) {
         push @tags_using_authtype, $tagfield;
     }
     my $tag_to=0;  
-#    if ((defined $authtypecodeto) and ($authtypecodeto ne $authtypecodefrom)){  
-#        # If many tags, take the first
-#        $sth->execute($authtypecodeto);    
-#        $tag_to=$sth->fetchrow;
-#        #warn $tag_to;    
-#    }  
-    foreach my $marcrecord(@reccache){
-        foreach my $tagfield (@tags_using_authtype){
-            foreach my $field ($marcrecord->field($tagfield)){
-                my $update;           
-                my $tag=$field->tag();          
-		my @newsubfields;
-		my %indexes;
-		#get to next field if no subfield
-		my @localsubfields = $field->subfields();
-		my $index_9_auth =0;
-		my $found =0;
-		for my $subf (@localsubfields) {
-		#			$debug && warn Data::Dumper::Dumper($subf);
-			if (($subf->[0] eq "9") and ($subf->[1] == $mergefrom))
-			{
-			    $found=1;
-			    $debug && warn "found $mergefrom ".$subf->[1];
-			    last;
-			}
-			$index_9_auth++;
-		};
-		#$debug && warn "$index_9_auth $#localsubfields $found";
-		next if ($index_9_auth >= $#localsubfields and !$found);
-		#Get the next $9 subfield
-		my $nextindex_9 =0;
-		for my $subf (@localsubfields[$index_9_auth + 1 .. $#localsubfields]){
-			last if ($subf->[0] =~ /[12456789]/); 
-			$nextindex_9++;
-		};
-		#Change the first tag if required
-		# That is : change the first tag ($a) to what it is in the biblio record
-		# Since some composed authorities will place the $a into $x or $y
-		my @tags=grep {$_->[0] !~/[0-9]/} @localsubfields[$index_9_auth..$nextindex_9];
-		$debug && warn @tags;
-		if (defined $tags[0]->[0] and $tags[0]->[0] ne "a"){
-		    for my $record (@record_to){
-		       if ($record->[0] eq "a"){
-			 $record->[0] =$tags[0]->[0];
-			 last;
-		       }
-		    }
-		}
-		#$debug && warn "$index_9_auth $nextindex_9 data to add ".Data::Dumper::Dumper(@record_to);
-		# Replace in local subfields the subfields related to recordfrom with data from record_to
-	        splice(@localsubfields,$index_9_auth,$nextindex_9 + 1,([9,$mergeto],@record_to));
-		#$debug && warn "after splice ".Data::Dumper::Dumper(@localsubfields);
-		#very nice api for MARC::Record
-		# It seems that some elements localsubfields can be undefined so skip them
-          	@newsubfields=map{(defined $_?@$_:())}@localsubfields;
-		#filter to subfields which are not in the subfield
-                my $field_to=MARC::Field->new(($tag_to?$tag_to:$tag),$field->indicator(1),$field->indicator(2),@newsubfields);
+    foreach my $marcrecord (@reccache) {
+        foreach my $tagfield (@tags_using_authtype) {
+            foreach my $field ( $marcrecord->field($tagfield) ) {
+                my $update;
+                my $tag = $field->tag();
+                my @newsubfields;
+                my %indexes;
+
+                #get to next field if no subfield
+                my @localsubfields = $field->subfields();
+                my $index_9_auth   = 0;
+                my $found          = 0;
+                for my $subf (@localsubfields) {
+
+                    if (    ( $subf->[0] eq "9" )
+                        and ( $subf->[1] == $mergefrom ) ) {
+                        $found = 1;
+                        $debug && warn "found $mergefrom " . $subf->[1];
+                        last;
+                    }
+                    $index_9_auth++;
+                }
+
+                next if ( $index_9_auth >= $#localsubfields and !$found );
+
+                # Removes the data if before the $9
+                my $index = 0;
+                for my $subf ( @localsubfields[ 0 .. $index_9_auth ] ) {
+                    if (any {
+                                $subf->[1] eq $_->[1]
+                        }
+                        @record_from
+                        ) {
+                        $debug && warn "found $subf->[0] " . $subf->[1];
+                        splice @localsubfields, $index, 1;
+                        $index_9_auth--;
+                    } else {
+                        $index++;
+                    }
+                }
+
+                #Get the next $9 subfield
+                my $nextindex_9 = 0;
+                for my $subf (
+                    @localsubfields[ $index_9_auth + 1 .. $#localsubfields ] )
+                {
+                    last if ($subf->[0] =~ /[1-9]/);
+                    $nextindex_9++;
+                }
+
+      #Change the first tag if required
+      # That is : change the first tag ($a) to what it is in the biblio record
+      # Since some composed authorities will place the $a into $x or $y
+
+                my @previous_subfields
+                    = @localsubfields[ 0 .. $index_9_auth ];
+                if (my $changesubfcode = _process_subfcode_4_merge(
+                        $tag, \@previous_subfields, $MARCto, \@record_to
+                    )
+                    ) {
+                    $record_to[0]->[0] = $changesubfcode
+                        if defined($changesubfcode);
+                }
+
+                splice(
+                    @localsubfields, $index_9_auth,
+                    $nextindex_9 + 1,
+                    ( [ 9, $mergeto ], @record_to )
+                );
+
+    #very nice api for MARC::Record
+    # It seems that some elements localsubfields can be undefined so skip them
+                @newsubfields
+                    = map { ( defined $_ ? @$_ : () ) } @localsubfields;
+
+                #filter to subfields which are not in the subfield
+                my $field_to = MARC::Field->new(
+                    ( $tag_to ? $tag_to : $tag ), $field->indicator(1),
+                    $field->indicator(2), @newsubfields
+                );
                 $marcrecord->delete_field($field);
-                $marcrecord->insert_fields_ordered($field_to);            
+                $marcrecord->insert_fields_ordered($field_to);
             }    #for each tag
         }    #foreach tagfield
-        my ( $bibliotag, $bibliosubf ) = GetMarcFromKohaField( "biblio.biblionumber", "" );
+        my ( $bibliotag, $bibliosubf )
+            = GetMarcFromKohaField( "biblio.biblionumber", "" );
         my $biblionumber;
         if ( $bibliotag < 10 ) {
             $biblionumber = $marcrecord->field($bibliotag)->data;
         } else {
             $biblionumber = $marcrecord->subfield( $bibliotag, $bibliosubf );
         }
-	#    $debug && warn $biblionumber,$marcrecord->as_formatted;
-        unless ($biblionumber){
-            warn "pas de numéro de notice bibliographique dans : ".$marcrecord->as_formatted;
+
+        unless ($biblionumber) {
+            warn "pas de numéro de notice bibliographique dans : "
+                . $marcrecord->as_formatted;
             next;
         }
-        #if ( $update == 1 ) {
-            &ModBiblio( $marcrecord, $biblionumber, GetFrameworkCode($biblionumber) );
-            $counteditedbiblio++;
-            warn $counteditedbiblio if ( ( $counteditedbiblio % 10 ) and $ENV{DEBUG} );
-        #}
-    }    #foreach $marc
-    DelAuthority($mergefrom) if ($mergefrom != $mergeto);
-    return $counteditedbiblio;
 
-    # now, find every other authority linked with this authority
-    # now, find every other authority linked with this authority
-    #   my $oConnection=C4::Context->Zconn("authorityserver");
-    #   my $query;
-    # # att 9210               Auth-Internal-authtype
-    # # att 9220               Auth-Internal-LN
-    # # ccl.properties to add for authorities
-    #   $query= "= ".$mergefrom;
-    #   my $oResult = $oConnection->search(new ZOOM::Query::CCL2RPN( $query, $oConnection ));
-    #   my $count=$oResult->size() if  ($oResult);
-    #   my @reccache;
-    #   my $z=0;
-    #   while ( $z<$count ) {
-    #   my $rec;
-    #           $rec=$oResult->record($z);
-    #       my $marcdata = $rec->raw();
-    #   push @reccache, $marcdata;
-    #   $z++;
-    #   }
-    #   $oResult->destroy();
-    #   foreach my $marc(@reccache){
-    #     my $update;
-    #     my $marcrecord;
-    #     $marcrecord = MARC::File::USMARC::decode($marc);
-    #     foreach my $tagfield (@tags_using_authtype){
-    #       $tagfield=substr($tagfield,0,3);
-    #       my @tags = $marcrecord->field($tagfield);
-    #       foreach my $tag (@tags){
-    #         my $tagsubs=$tag->subfield("9");
-    #     #warn "$tagfield:$tagsubs:$mergefrom";
-    #         if ($tagsubs== $mergefrom) {
-    #           $tag->update("9" =>$mergeto);
-    #           foreach my $subfield (@record_to) {
-    #     #        warn "$subfield,$subfield->[0],$subfield->[1]";
-    #             $tag->update($subfield->[0] =>$subfield->[1]);
-    #           }#for $subfield
-    #         }
-    #         $marcrecord->delete_field($tag);
-    #         $marcrecord->add_fields($tag);
-    #         $update=1;
-    #       }#for each tag
-    #     }#foreach tagfield
-    #     my $authoritynumber = TransformMarcToKoha($dbh,$marcrecord,"") ;
-    #     if ($update==1){
-    #       &ModAuthority($marcrecord,$authoritynumber,GetAuthTypeCode($authoritynumber)) ;
-    #     }
-    #
-    #   }#foreach $marc
+        &ModBiblio( $marcrecord, $biblionumber,
+            GetFrameworkCode($biblionumber) );
+        push @edited_biblios, $biblionumber;
+
+    }    #foreach $marc
+    DelAuthority($mergefrom) if ( $mergefrom != $mergeto );
+    return @edited_biblios;
+
 }    #sub
 
 =head2 get_auth_type_location
