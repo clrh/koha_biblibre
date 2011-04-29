@@ -1912,8 +1912,10 @@ sub getItemsInfos {
 
     SetUTF8Flag( $marcrecord ) if $marcrecord;
 
-    if ( C4::Context->preference("OPACXSLTResultsDisplay") ) {
-        $biblio->{'OPACXSLTResultsRecord'} = XSLTParse4Display( $biblionumber, $marcrecord, C4::Context->preference("OPACXSLTResultsDisplay") );
+	$interface =~ s/(opac)/\U$1/i;
+	$interface =~ s/(intranet)/Intranet/i;
+    if ( C4::Context->preference($interface."XSLTResultsDisplay") ) {
+        $biblio->{$interface.'XSLTResultsRecord'} = XSLTParse4Display( $biblionumber, $marcrecord, C4::Context->preference($interface."XSLTResultsDisplay") );
     }
 
     return $biblio;
