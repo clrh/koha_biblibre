@@ -133,6 +133,11 @@ if ( $op eq 'insert' || $op eq 'modify' || $op eq 'save' || $op eq 'duplicate' )
         }
     }
 
+    if ( C4::Context->preference('uppercasesurnames') ) {
+        $newdata{'surname'}     = uc( $newdata{'surname'} ) if $newdata{'surname'};
+        $newdata{'contactname'} = uc( $newdata{'contactname'} ) if $newdata{'contactname'};
+    }
+
     ## Manipulate debarred
     if ( $newdata{debarred} ) {
         $newdata{debarred} = $newdata{datedebarred} ? $newdata{datedebarred} : "9999-12-31";
@@ -630,10 +635,6 @@ if ( !defined( $data{'dateenrolled'} ) or $data{'dateenrolled'} eq '' ) {
 if ( $op eq 'duplicate' ) {
     $data{'dateenrolled'} = C4::Dates->today('iso');
     $data{'dateexpiry'} = GetExpiryDate( $data{'categorycode'}, $data{'dateenrolled'} );
-}
-if ( C4::Context->preference('uppercasesurnames') ) {
-    $data{'surname'}     = uc( $data{'surname'} );
-    $data{'contactname'} = uc( $data{'contactname'} );
 }
 
 $data{debarred} = C4::Overdues::CheckBorrowerDebarred($borrowernumber);
