@@ -787,25 +787,22 @@ sub BuildSummary {
             push @textafter,  $matches[$i] if($i%4 == 3);
         }
         for(my $i = scalar @tag; $i >= 0; $i--){
-            my $textbefore = $textbefore[$i];
-            my $tag = $tag[$i];
-            my $subtag = $subtag[$i];
-            my $textafter = $textafter[$i];
-            my $value;
+            my $textbefore = $textbefore[$i] || '';
+            my $tag = $tag[$i] || '';
+            my $subtag = $subtag[$i] || '';
+            my $textafter = $textafter[$i] || '';
+            my $value = '';
             my $field = $record->field($tag);
-            next unless $field;
-            if($subtag eq '*') {
-                if($tag < 10) {
-                    $value = $textbefore . $field->data() . $textafter;
+            if ( $field ) {
+                if($subtag eq '*') {
+                    if($tag < 10) {
+                        $value = $textbefore . $field->data() . $textafter;
+                    }
                 } else {
-                    $value = '';
-                }
-            } else {
-                my $subfield = $field->subfield($subtag);
-                if(defined $subfield) {
-                    $value = $textbefore . $subfield . $textafter;
-                } else {
-                    $value = '';
+                    my $subfield = $field->subfield($subtag);
+                    if(defined $subfield) {
+                        $value = $textbefore . $subfield . $textafter;
+                    }
                 }
             }
             $summary =~ s/\[\Q$textbefore$tag$subtag$textafter\E\]/$value/;
