@@ -90,12 +90,12 @@ C<$record> - a MARC::Record object
 
 =cut
 
+our $intype      = lc(C4::Context->preference("marcflavour"));
+
 sub marc2ris {
     my ($record) = @_;
     my $output;
 
-    my $marcflavour = C4::Context->preference("marcflavour");
-    my $intype      = lc($marcflavour);
     my $marcprint   = 1;                                        # Debug
 
     # Let's redirect stdout
@@ -376,9 +376,7 @@ sub normalize_author {
     my ( $rawauthora, $rawauthorb, $rawauthorc, $nametype ) = @_;
 
     if ( $nametype == 0 ) {
-
         # ToDo: convert every input to Last[,(F.|First)[ (M.|Middle)[,Suffix]]]
-        warn("name >>$rawauthora<< in direct order - leave as is");
         return $rawauthora;
     } elsif ( $nametype == 1 ) {
         ## start munging subfield a (the real name part)
@@ -423,6 +421,10 @@ sub get_author {
         $indicator = 1;
     }
 
+    my $sf_a = $authorfield->subfield('a') || undef;
+    my $sf_b = $authorfield->subfield('b') || undef;
+    my $sf_c = $authorfield->subfield('c') || undef;
+
     print "<marc>:Author(Ind$indicator): ", $authorfield->indicator("$indicator"), "\n" if $marcprint;
     print "<marc>:Author(\$a): ",           $authorfield->subfield('a'),           "\n" if $marcprint;
     print "<marc>:Author(\$b): ",           $authorfield->subfield('b'),           "\n" if $marcprint;
@@ -430,9 +432,10 @@ sub get_author {
     print "<marc>:Author(\$h): ",           $authorfield->subfield('h'),           "\n" if $marcprint;
     if ( $intype eq "ukmarc" ) {
         my $authorname = $authorfield->subfield('a') . "," . $authorfield->subfield('h');
-        normalize_author( $authorname, $authorfield->subfield('b'), $authorfield->subfield('c'), $authorfield->indicator("$indicator") );
+        normalize_author( $authorname, $sf_b, $sf_c, $authorfield->indicator("$indicator") );
     } else {
-        normalize_author( $authorfield->subfield('a'), $authorfield->subfield('b'), $authorfield->subfield('c'), $authorfield->indicator("$indicator") );
+        my $auth=normalize_author( $sf_a, $sf_b, $sf_c, $authorfield->indicator("$indicator") );
+        return $auth;
     }
 }
 
@@ -520,13 +523,13 @@ sub print_stitle {
         $clean_title =~ s% *[/:;.]$%%;
 
         if ( length($clean_title) > 0 ) {
-            print "T2  - ", &charconv($clean_title);
+            print "T2  - ", &charconv($clean_title), "\n";
         }
 
         if ( $intype eq "unimarc" ) {
             print "<marc>Series vol(\$v): ", $titlefield->subfield('v'), "\n" if $marcprint;
             if ( length( $titlefield->subfield('v') ) > 0 ) {
-                print "VL  - ", &charconv( $titlefield->subfield('v') );
+                print "VL  - ", &charconv( $titlefield->subfield('v') ), "\n";
             }
         }
     }
@@ -543,13 +546,7 @@ sub print_isbn {
         print "<marc>no isbn found (020\$a)\n" if $marcprint;
         warn("no isbn found");
     } else {
-        if ( length( $isbnfield->subfield('a') ) < 10 ) {
-            print "<marc>truncated isbn (020\$a)\n" if $marcprint;
-            warn("truncated isbn");
-        }
-
-        my $isbn = substr( $isbnfield->subfield('a'), 0, 10 );
-        print "SN  - ", &charconv($isbn), "\n";
+        print "SN  - ", &charconv($isbnfield->subfield('a')), "\n";
     }
 }
 
@@ -564,13 +561,7 @@ sub print_issn {
         print "<marc>no issn found (022\$a)\n" if $marcprint;
         warn("no issn found");
     } else {
-        if ( length( $issnfield->subfield('a') ) < 9 ) {
-            print "<marc>truncated issn (022\$a)\n" if $marcprint;
-            warn("truncated issn");
-        }
-
-        my $issn = substr( $issnfield->subfield('a'), 0, 9 );
-        print "SN  - ", &charconv($issn), "\n";
+        print "SN  - ", &charconv($issnfield->subfield('a')), "\n";
     }
 }
 
