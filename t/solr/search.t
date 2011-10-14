@@ -24,7 +24,7 @@ my $authorindex = C4::Search::Query::getIndexName("author");
 my $eanindex = C4::Search::Query::getIndexName("ean");
 my $pubdateindex = C4::Search::Query::getIndexName("pubdate");
 
-BEGIN { $tests += 20 } # 'Normal' search
+BEGIN { $tests += 22 } # 'Normal' search
 @$operands[0] = "title:maudits"; # Solr indexes
 @$indexes = ();
 @$operators = ();
@@ -62,15 +62,25 @@ $got = C4::Search::Query->normalSearch($q);
 $expected = "$titleindex:maudits AND a OR $authorindex:andre NOT $eanindex:blabla";
 is($got, $expected, "Test 'normal' search");
 
-$q = "Mathématiques Analyse L3 : Cours complet"; # escape colon
+$q = qq{Mathématiques Analyse L3 : Cours complet}; # escape colon
 $got = C4::Search::Query->normalSearch($q);
 $expected = "Mathématiques Analyse L3 \\: Cours complet";
 is($got, $expected, "Test escape colon");
 
-$q = "Mathématiques Analyse L3 \\: Cours complet"; # escape colon
+$q = qq{Mathématiques Analyse L3 \\: Cours complet}; # escape colon
 $got = C4::Search::Query->normalSearch($q);
 $expected = "Mathématiques Analyse L3 \\: Cours complet";
 is($got, $expected, "Test no escape colon if already escaped");
+
+$q = qq{title:'Mathématiques: Analyse L3:Cours complet'}; # escape colon
+$got = C4::Search::Query->normalSearch($q);
+$expected = "$titleindex:'Mathématiques\\: Analyse L3\\:Cours complet'";
+is($got, $expected, "Test escape colon without space");
+
+$q = qq{title:'Mathématiques\\: Analyse L3\\:Cours complet'}; # escape colon
+$got = C4::Search::Query->normalSearch($q);
+$expected = "$titleindex:'Mathématiques\\: Analyse L3\\:Cours complet'";
+is($got, $expected, "Test no escape colon if already escaped without space");
 
 $q = "Mathéma*"; # lc if wildcard
 $got = C4::Search::Query->normalSearch($q);

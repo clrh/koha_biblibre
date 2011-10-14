@@ -147,7 +147,19 @@ sub normalSearch {
     $query =~ s/(\w*\*)/\L$1\E/g; # Lower case on words with right truncation
     $query =~ s/(\s*\w*\?+\w*\s*)/\L$1\E/g; # Lower case on words contain wildcard ?
 
+    my @quotes; # Process colons in quotes
+    while ( $query =~ /'(?:[^'\\]++|\\.)*+'/g ) {
+        push @quotes, $&;
+    }
+
+    for ( @quotes ) {
+        my $replacement = $_;
+        $replacement =~ s/[^\\]\K:/\\:/g;
+        $query =~ s/$_/$replacement/;
+    }
+
     $query =~ s/ : / \\: /g; # escape colons if " : "
+
     my $new_query = C4::Search::Query::splitToken($query);
 
     $new_query =~ s/all_fields://g;
