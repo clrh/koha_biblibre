@@ -491,6 +491,9 @@ sub IndexRecord {
                 if ( $index->{'plugin'} ) {
                     $concatmappings = &GetConcatMappingsValue( $index->{'plugin'}, \@list_of_plugins );
                     my $plugin = LoadSearchPlugin( $index->{'plugin'}, \@list_of_plugins ) if $index->{'plugin'};
+
+                    warn "Plugin $index->{plugin} no exists !" and next if not $plugin;
+
                     @values = &$plugin( $record, $mapping );
 
                     $plugin = LoadSearchPluginSrt( $index->{'plugin'}, \@list_of_plugins ) if $index->{'plugin'};
