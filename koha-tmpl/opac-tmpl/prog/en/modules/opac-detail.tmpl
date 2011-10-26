@@ -947,7 +947,9 @@ details</a></p>
         <option value="marcxml">MARCXML</option>
         <option value="marc8">MARC (non-Unicode/MARC-8)</option>
         <option value="utf8">MARC (Unicode/UTF-8)</option>    
-        <option value="mods">MODS (XML)</option>
+        <!-- TMPL_IF EXPR="marcflavour eq 'MARC21'" -->
+            <option value="mods">MODS (XML)</option>
+        <!-- /TMPL_IF -->
         <option value="ris">RIS</option>
 		</select><input type="hidden" name="op" value="export" /><input type="hidden" name="bib" value="<!-- TMPL_VAR NAME="biblionumber" -->" />
 <input type="submit" name="save" value="Go" /></form>

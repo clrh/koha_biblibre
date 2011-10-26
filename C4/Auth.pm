@@ -354,6 +354,7 @@ sub get_template_and_user {
         singleBranchMode    => C4::Context->preference("singleBranchMode"),
         BranchesLoop        => GetBranchesLoop(),
         using_https         => $in->{'query'}->https() ? 1 : 0,
+        marcflavour         => C4::Context->preference("marcflavour"),
     );
 
     if ( $in->{'type'} eq "intranet" ) {
