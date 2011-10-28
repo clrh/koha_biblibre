@@ -296,7 +296,7 @@ if ( $template_type eq 'advsearch' ) {
 ### OK, if we're this far, we're performing a search, not just loading the advanced search page
 
 # Params that can only have one value
-my $count            = C4::Context->preference('OPACnumSearchResults') || 20;
+my $count            = C4::Context->preference('numSearchResults') || 20;
 my $page             = $cgi->param('page') || 1;
 
 #clean operands array
@@ -471,7 +471,7 @@ $template->param(
     'query_desc'     => $q,
     'search_desc'    => $q,
     'availability'   => $filters{'int_availability'},
-    'count'          => C4::Context->preference('OPACnumSearchResults') || 20,
+    'count'          => C4::Context->preference('numSearchResults') || 20,
     author_indexname => C4::Search::Query::getIndexName('author'),
     availability_indexname => C4::Search::Query::getIndexName('availability'),
 );
