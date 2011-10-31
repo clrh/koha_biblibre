@@ -25,6 +25,11 @@ my $claimdateto = $input->param('claimdateto');
 # Fetch DataTables parameters
 my %dtparam = dt_get_params( $input );
 
+while ( my ( $k, $v ) = each %dtparam ) {
+    $v =~ s/^dt_(.+)/$1/;
+    $dtparam{$k} = $v;
+}
+
 my $dbh = C4::Context->dbh;
 
 # Build the query
