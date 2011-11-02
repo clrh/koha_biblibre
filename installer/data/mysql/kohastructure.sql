@@ -230,6 +230,7 @@ CREATE TABLE `borrowers` (
   `gonenoaddress` tinyint(1) default NULL,
   `gonenoaddresscomment` VARCHAR(255) default NULL,
   `lost` tinyint(1) default NULL,
+  `lostcomment` VARCHAR(255) default NULL,
   `debarred` date default NULL,
   `debarredcomment` VARCHAR(255) DEFAULT NULL,
   `contactname` mediumtext,
