@@ -108,12 +108,13 @@ function verify_images() {
     <!-- /TMPL_IF -->
     
     <!-- TMPL_IF name="OpacUrl" -->
-    	<li><strong>OPAC View:</strong>
-    	<a href="http://<!-- TMPL_VAR name="OpacUrl" -->/cgi-bin/koha/opac-detail.pl?biblionumber=<!-- TMPL_VAR NAME="biblionumber" -->" target="_blank">Open in new window</a>
-		</li>
-	<!-- /TMPL_IF -->
-        </ul>
-        </div>
+        <li>
+            <strong>OPAC View:</strong>
+            <a href="<!-- TMPL_VAR name="OpacUrl" -->/cgi-bin/koha/opac-detail.pl?biblionumber=<!-- TMPL_VAR NAME="biblionumber" -->" target="_blank">Open in new window</a>
+        </li>
+    <!-- /TMPL_IF -->
+    </ul>
+    </div>
        
 <!-- TMPL_IF NAME="AmazonEnabled" --><!-- TMPL_IF NAME="AmazonCoverImages" --><div class="yui-u" id="bookcoverimg">
 <a href="http://www.amazon<!-- TMPL_VAR NAME="AmazonTld" -->/gp/reader/<!-- TMPL_VAR NAME="normalized_isbn" -->/ref=sib_dp_pt/002-7879865-0184864#reader-link"><img border="0" src="http://images.amazon.com/images/P/<!-- TMPL_VAR NAME="normalized_isbn" -->.01.MZZZZZZZ.jpg" alt="" /></a></div><!-- /TMPL_IF --><!-- /TMPL_IF -->
