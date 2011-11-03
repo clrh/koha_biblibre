@@ -1125,32 +1125,15 @@ sub merge {
 
     # search all biblio tags using this authority.
     #Getting marcbiblios impacted by the change.
-    if ( C4::Context->preference('NoZebra') ) {
+    my $query = C4::Search::Query->normalSearch("an=$mergefrom");
+    my $results = C4::Search::SimpleSearch($query);
 
-        #nozebra way
-        my $dbh = C4::Context->dbh;
-        my $rq  = $dbh->prepare(qq(SELECT biblionumbers from nozebra where indexname="an" and server="biblioserver" and value="$mergefrom" ));
-        $rq->execute;
-        while ( my $biblionumbers = $rq->fetchrow ) {
-            my @biblionumbers = split /;/, $biblionumbers;
-            foreach (@biblionumbers) {
-                if ( $_ =~ /(\d+),.*/ ) {
-                    my $marc = GetMarcBiblio($1);
-                    push @reccache, $marc;
-                }
-            }
-        }
-    } else {
-        my $query = C4::Search::Query->normalSearch("an=$mergefrom");
-        my $results = C4::Search::SimpleSearch($query);
+    $debug && warn scalar(@{$results->{items}});
 
-        $debug && warn scalar(@$results);
-
-        foreach my $rawrecord( @{$results->items} ) {
-            my $marcrecord = GetMarcBiblio($rawrecord->{values}->{recordid});
-            SetUTF8Flag($marcrecord);
-            push @reccache, $marcrecord;
-        }
+    foreach my $rawrecord( @{$results->{items}} ) {
+        my $marcrecord = GetMarcBiblio($rawrecord->{values}->{recordid});
+        SetUTF8Flag($marcrecord);
+        push @reccache, $marcrecord;
     }
 
     #warn scalar(@reccache)." biblios to update";
