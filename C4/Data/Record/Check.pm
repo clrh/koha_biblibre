@@ -88,7 +88,7 @@ AND (authtypecode IS NOT NULL AND authtypecode<>\"\")|
                 $authtype_index => $data->{authtypecode},
             };
             my $name_index = C4::Search::Query::getIndexName('auth-heading');
-            for ( $field->subfields ) { $$filters{$name_index} = $_->[1] if $_->[0] =~ /[A-z]/ };
+            for ( $field->subfields ) { $query .= qq{ AND $name_index:"$_->[1]"} if $_->[0] =~ /[A-z]/ };
             my $res = SimpleSearch( $query, $filters );
             my $hits = $$res{'pager'}{'total_entries'};
             if ( !$$res{error} and $hits == 1 ) {
