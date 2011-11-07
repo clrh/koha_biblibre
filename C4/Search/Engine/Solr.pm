@@ -545,7 +545,7 @@ sub IndexRecord {
 
                 # Add index str for facets if it's not exist
                 if ( $index->{'faceted'} and @values > 0 and $index->{'type'} ne 'str' ) {
-                    $solrrecord->set_value("str_".$index->{'code'}, $values[0]);
+                    $solrrecord->set_value("str_".$index->{'code'}, \@values);
                 }
             };
             if ( $@ ) {
