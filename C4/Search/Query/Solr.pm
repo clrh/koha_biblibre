@@ -116,7 +116,11 @@ sub BuildTokenString {
                 if ( $index =~ /^date_/ ) {
                     $value = C4::Search::Engine::Solr::buildDateOperand( $value );
                 }
-                qq{$index:$value};
+                ( $value =~ /^"/ and $value ne '""'
+                        and $index ne "emallfields"
+                        and $index =~ /(txt_|ste_)/ )
+                    ? qq{em$index:$value}
+                    : qq{$index:$value};
             } (@dqs, @words);
             $r .= qq{($join)};
         } else {

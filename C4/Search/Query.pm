@@ -198,6 +198,12 @@ sub splitToken {
             $operand = C4::Search::Engine::Solr::buildDateOperand( $operand );
         }
 
+        # If Exact match, we search in em* index
+        $idx = "em$idx" if $old_operand =~ /^"/
+            and $old_operand ne '""'
+            and $idx ne "emallfields"
+            and $idx =~ /^(txt_|ste_)/;
+
         given ( $attr ) {
             when ( 'phr' ) {
                 # If phr on attr, we add ""
@@ -228,6 +234,14 @@ sub splitToken {
 
     # Delete first space causing by previous replacement
     $string =~ s/^ //;
+
+    # Exactmatch
+    my $old_string = $string;
+    # Foreach double-quoted string
+    while ( $old_string =~ /"(?:[^"\\]++|\\.)*+"/g ) {
+        # index is emallfields if not ':' just before
+        $string =~ s/([^:]|^)(\Q$&\E)/$1emallfields:$2/g;
+    }
 
     return $string;
 }

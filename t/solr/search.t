@@ -223,28 +223,28 @@ is($got, $expected, qq{Test BuildIndexString with (maudits crépuscule)});
 @$indexes = ("title");
 @$operators = ();
 $got = C4::Search::Query->buildQuery($indexes, $operands, $operators);
-$expected = qq{($titleindex:"le crépuscule des maudits")};
+$expected = qq{(em$titleindex:"le crépuscule des maudits")};
 is($got, $expected, qq{Test BuildIndexString with ("le crépuscule des maudits")});
 
 @$operands = (qq{"le crépuscule" "des maudits"});
 @$indexes = ("title");
 @$operators = ();
 $got = C4::Search::Query->buildQuery($indexes, $operands, $operators);
-$expected = qq{($titleindex:"le crépuscule" AND $titleindex:"des maudits")};
+$expected = qq{(em$titleindex:"le crépuscule" AND em$titleindex:"des maudits")};
 is($got, $expected, qq{Test BuildIndexString with ("le crépuscule" "des maudits")});
 
 @$operands = (qq{"le crépuscule" "des maudits"});
 @$indexes = ("title");
 @$operators = ();
 $got = C4::Search::Query->buildQuery($indexes, $operands, $operators);
-$expected = qq{($titleindex:"le crépuscule" AND $titleindex:"des maudits")};
+$expected = qq{(em$titleindex:"le crépuscule" AND em$titleindex:"des maudits")};
 is($got, $expected, qq{Test BuildIndexString with ("le crépuscule" "des maudits")});
 
 @$operands = (qq{"le crépuscule" mot "des maudits"});
 @$indexes = ("title");
 @$operators = ();
 $got = C4::Search::Query->buildQuery($indexes, $operands, $operators);
-$expected = qq{($titleindex:"le crépuscule" AND $titleindex:"des maudits" AND $titleindex:mot)};
+$expected = qq{(em$titleindex:"le crépuscule" AND em$titleindex:"des maudits" AND $titleindex:mot)};
 is($got, $expected, qq{Test BuildIndexString with ("le crépuscule" mot "des maudits")});
 
 @$operands = (qq{les maudits}, qq{a}, qq{andre besson}); # With 'More options'
@@ -386,7 +386,7 @@ is($got, $expected, qq{Test just one \" (normalSearch)});
 @$indexes = ("title");
 @$operators = ();
 $got = C4::Search::Query->buildQuery($indexes, $operands, $operators);
-$expected = qq{($titleindex:"foo \\"bar")};
+$expected = qq{(em$titleindex:"foo \\"bar")};
 is($got, $expected, qq{Test just one \" (buildQuery)});
 
 BEGIN { $tests += 12 } # Test for date index
@@ -471,4 +471,49 @@ is($got, $expected, qq{Date index format iso [date TO *] (buildQuery)});
 $got = C4::Search::Query->buildQuery($indexes, $operands, $operators);
 $expected = qq{$pubdateindex:[* TO 2011-01-01T00:00:00Z]};
 is($got, $expected, qq{Date index format iso [* TO date] (buildQuery)});
+
+BEGIN { $tests += 8 } # Test for exact match
+$q = qq{title:"Le crépuscule des maudits"};
+$got = C4::Search::Query->normalSearch($q);
+$expected = qq{em$titleindex:"Le crépuscule des maudits"};
+is($got, $expected, qq{Exactmatch on an index (normalSearch)});
+
+$q = qq{title:"Le crépuscule" title:"des maudits"};
+$got = C4::Search::Query->normalSearch($q);
+$expected = qq{em$titleindex:"Le crépuscule" em$titleindex:"des maudits"};
+is($got, $expected, qq{Exactmatch on multiples index (normalSearch)});
+
+$q = qq{"Le crépuscule des maudits"};
+$got = C4::Search::Query->normalSearch($q);
+$expected = qq{emallfields:"Le crépuscule des maudits"};
+is($got, $expected, qq{Exactmatch on all fields (normalSearch)});
+
+$q = qq{title:"Le crépuscule" "des maudits"};
+$got = C4::Search::Query->normalSearch($q);
+$expected = qq{em$titleindex:"Le crépuscule" emallfields:"des maudits"};
+is($got, $expected, qq{Exactmatch on an index and all fields (normalSearch)});
+
+$q = qq{emallfields:"Le crépuscule des maudits"};
+$got = C4::Search::Query->normalSearch($q);
+$expected = qq{emallfields:"Le crépuscule des maudits"};
+is($got, $expected, qq{Exactmatch on emallfields directly (normalSearch)});
+
+@$operands = (qq{"Le crépuscule des maudits"});
+@$indexes = ("emallfields");
+@$operators = ();
+$got = C4::Search::Query->buildQuery($indexes, $operands, $operators);
+$expected = qq{(emallfields:"Le crépuscule des maudits")};
+is($got, $expected, qq{Exactmatch on emallfields directly (buildQuery)});
+
+$q = qq{str_foo:"Le crépuscule des maudits"};
+$got = C4::Search::Query->normalSearch($q);
+$expected = qq{str_foo:"Le crépuscule des maudits"};
+is($got, $expected, qq{Exactmatch don't replace str_* index (normalSearch)});
+
+@$operands = (qq{"Le crépuscule des maudits"});
+@$indexes = ("str_foo");
+@$operators = ();
+$got = C4::Search::Query->buildQuery($indexes, $operands, $operators);
+$expected = qq{(str_foo:"Le crépuscule des maudits")};
+is($got, $expected, qq{Exactmatch don't replace str_* index (buildQuery)});
 
