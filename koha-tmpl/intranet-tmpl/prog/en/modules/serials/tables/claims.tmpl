@@ -5,31 +5,31 @@
     'aaData': [
         <!-- TMPL_LOOP NAME='aaData' -->
             {
-                'checkbox':
+                'dt_checkbox':
                     '<!-- TMPL_UNLESS NAME="cannot_claim" --><input type="checkbox" name="serialid" value="<!-- TMPL_VAR NAME="serialid"-->" /><!-- /TMPL_UNLESS -->',
 
-                'suppliername':
+                'dt_suppliername':
                     '<!-- TMPL_VAR NAME="suppliername" ESCAPE="html"-->',
 
-                'title':
+                'dt_title':
                     '<a href="/cgi-bin/koha/serials/subscription-detail.pl?subscriptionid=<!-- TMPL_VAR NAME="subscriptionid" -->"><!-- TMPL_VAR name="title" escape="html" --></a>',
 
-                'branchname':
+                'dt_branchname':
                     '<!-- TMPL_VAR name="branchname" escape="html" -->',
 
-                'serialseq':
+                'dt_serialseq':
                     '<!-- TMPL_VAR name="serialseq" -->',
 
-                'status':
+                'dt_status':
                     '<!-- TMPL_IF EXPR="status eq 1" -->Expected<!-- /TMPL_IF --><!-- TMPL_IF EXPR="status eq 2" -->Arrived<!-- /TMPL_IF --><!-- TMPL_IF EXPR="status eq 3" -->Late<!-- /TMPL_IF --><!-- TMPL_IF EXPR="status eq 4" -->Missing<!-- /TMPL_IF --><!-- TMPL_IF EXPR="status eq 7" -->Claimed<!-- /TMPL_IF -->',
 
-                'planneddate':
+                'dt_planneddate':
                     '<!-- TMPL_VAR name="planneddate" -->',
 
-                'claims_count':
+                'dt_claims_count':
                     '<!-- TMPL_VAR NAME="claims_count" -->',
 
-                'claimdate':
+                'dt_claimdate':
                     '<!-- TMPL_VAR name="claimdate" -->'
 
             }<!-- TMPL_UNLESS NAME='__last__' -->,<!-- /TMPL_UNLESS -->
