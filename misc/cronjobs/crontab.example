@@ -1,86 +1,40 @@
-# Koha Example Crontab File
-# Author: Joe Atzberger <atz@liblime.com>
-#
-# This is an example of a crontab file for Debian.  It may not work 
-# in other versions of crontab, like on Solaris 8 or BSD, for example.
-# 
-# While similar in structure, 
-# this is NOT an example for cron (as root).  Cron takes an extra
-# argument per line to designate the user to run as.  You could 
-# reasonably extrapolate the needed info from here though.
-#
-# WARNING: These jobs will do things like charge fines, send
-# potentially VERY MANY emails to patrons and even debar offending
-# users.  DO NOT RUN OR SCHEDULE these jobs without being sure you
-# really intend to.  Make sure the relevant message templates are
-# configured to your liking before scheduling messages to be sent.
-#
-# ENVIRONMENT:
-# First, establish Koha's two important ENV variables.
+# Koha Cronjob example
+# cp ~/misc/cronjobs/crontab.example ~/bin/crontab.koha
+# should be under git in koha-sites.git
 
-PERL5LIB=/home/liblime/kohaclone
-KOHA_CONF=/home/liblime/kohaclone/etc/koha-conf.xml
+# Koha env variables
+PERL5LIB=/home/koha/src
+#PERL5LIB=/home/koha/src:/home/koha/lib/koha-patron/lib
+KOHA_CONF=/home/koha/etc/koha-conf.xml
 
-# Some additional variables to save you typing
-KOHA_CRON_PATH = /home/liblime/kohaclone/misc/cronjobs
-#
-# MULTIPLE KOHA SUPPORT:
-# You can still run jobs for this user's additional koha installs, 
-# by manipulating those variables in the command.
-#
-# For example, on the same codebase:
-# */10 * * * *    KOHA_CONF=/home/liblime/koha-test/etc/koha-conf.xml /home/liblime/kohaclone/misc/migration_tools/rebuild_zebra.pl -b -a -z >/dev/null
-#
-# For example, on a separate codebase:
-# */10 * * * *    KOHA_CONF=/home/liblime/koha-test/etc/koha-conf.xml PERL5LIB=/home/liblime/koha-test /home/liblime/koha-test/misc/migration_tools/rebuild_zebra.pl -b -a -z >/dev/null
-# 
-# ADDITIONAL INFO:
-# See the perldoc of individual scripts to determine what other options
-# are available.  Check the man page for crontab to understand the 
-# schedule syntax for your system.  
-#
-# NOTE: Don't forget to keep the empty line at the bottom. 
-# Cron/crontab will choke without it.
-#
-# SCHEDULED JOBS:
-# m h  dom mon dow   command
+# Cron usage
+KOHA_CRON_PATH=/home/koha/bin/cron
+MAILTO=sysop@biblibre.com
+#MAILTO=sysop@biblibre.com,autre@mail.com
 
-# OVERDUE NOTICES
-0    1 * * *  $KOHA_CRON_PATH/overdue_notices.pl -t
+# Overdue notices
+0 1 * * *  $KOHA_CRON_PATH/overdues.sh
 
-# FINES
-5    1 * * *  $KOHA_CRON_PATH/fines.pl
+# Advance notices
+10 1 * * *  $KOHA_CRON_PATH/advance_notices.pl -c
 
-# ADVANCE NOTICES
-10   1 * * *  $KOHA_CRON_PATH/advance_notices.pl -c
-
-# PROCESS LONG OVERDUES
-# updates item status from available to longoverdue for items long overdue
-# 19 1 * * *  $KOHA_CRON_PATH/longoverdue.pl --lost 90=1 --confirm
-
-# SEND EMAILS
-15   * * * *  $KOHA_CRON_PATH/process_message_queue.pl
-
-# Hourly holds queue updated
-52   * * * *  $KOHA_CRON_PATH/holds/build_holds_queue.pl >/dev/null 2>&1
+# Send emails
+15 * * * *  $KOHA_CRON_PATH/process_message_queue.pl
 
 # Cancel expired holds
 0 1 * * *  $KOHA_CRON_PATH/holds/cancel_expired_holds.pl >/dev/null 2>&1
 
-# ZEBRA INDEX UPDATES with -z option, incremental index updates throughout the day
-# for both authorities and bibs
-*/10 * * * *  $KOHA_CRON_PATH/../migration_tools/rebuild_zebra.pl -b -a -z >/dev/null
+# Clean up databases nightly.  Be sure not to run this with --sessions during a time when the system is in use!
+16 1 * * * $KOHA_CRON_PATH/cleanup_database.pl --sessions 10
 
-# services_throttle -- resets the xISBN service
-59 23 * * *  $KOHA_CRON_PATH/services_throttle.pl > /dev/null 2>&1
+# Solr Jobs
+00 21 * * * perl /home/koha/src/misc/migration_tools/rebuild_solr.pl -o
 
-# ROTATE LOGS
-# Obviously, one needs logrotate(8) to do this
-# 20 1 * * *  /usr/sbin/logrotate -s /home/liblime/kohaclone/var/run/zebradb/logstatus /home/liblime/kohaclone/etc/logrotate.conf
+# Update borrowers
+00 2 * * * sh $KOHA_CRON_PATH/update_borrowers.sh
 
-# clean up databases nightly.  Be sure not to run this with --sessions during a time when the system is in use!
-16 1 * * * $KOHA_CRON_PATH/cleanup_database.pl --sessions --zebraqueue 10
+# WF merge dev/solr
+#0 1 * * * export KOHA_CONF=/home/koha/etc/koha-conf.xml; export PERL5LIB=/home/koha/src; perl /home/koha/src/misc/cronjobs/clean_batchimport.pl -status cleaned -duration 1 -laps MONTH
 
-# solr configuration
-00 21 * * * perl /home/koha/src/misc/migration_tools/rebuild_solr.pl -t biblio -o
-*/5 8-19 * * * /home/koha/bin/syncitems.sh
+# Remove unused authorities
+0 2 * * * perl /home/koha/src/misc/migration_tools/remove_unused_authorities.pl --all 
