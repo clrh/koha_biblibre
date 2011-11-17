@@ -1018,17 +1018,19 @@ sub AddIssue {
                 CartToShelf( $item->{'itemnumber'} );
             }
             $item->{'issues'}++;
+
+            my $today = C4::Dates->new();
             ModItem(
                 {   issues           => $item->{'issues'},
                     holdingbranch    => C4::Context->userenv->{'branch'},
                     itemlost         => 0,
-                    datelastborrowed => C4::Dates->new()->output('iso'),
                     onloan           => $datedue->output('iso'),
+                    datelastborrowed => $today->output('iso'),
+                    datelastseen     => $today->output("iso"),
                 },
                 $item->{'biblionumber'},
                 $item->{'itemnumber'}
             );
-            ModDateLastSeen( $item->{'itemnumber'} );
 
             # If it costs to borrow this book, charge it to the patron's account.
             my ( $charge, $itemtype ) = GetIssuingCharges( $item->{'itemnumber'}, $borrower->{'borrowernumber'} );
@@ -1239,6 +1241,7 @@ sub AddReturn {
         $doreturn = 0;
     }
 
+    my $moditem;
     # case of a return of document (deal with issues and holdingbranch)
     if ($doreturn) {
         $borrower or warn "AddReturn without current borrower";
@@ -1255,17 +1258,23 @@ sub AddReturn {
             $messages->{'WasReturned'} = 1;    # FIXME is the "= 1" right?  This could be the borrower hash.
         }
 
-        ModItem( { renewals => 0, onloan => undef }, $issue->{'biblionumber'}, $item->{'itemnumber'} );
+        $moditem = {
+            renewals => 0,
+            onloan => undef
+        };
 
         # the holdingbranch is updated if the document is returned to another location.
         # this is always done regardless of whether the item was on loan or not
-        if ( $item->{'holdingbranch'} ne $branch ) {
-            UpdateHoldingbranch( $branch, $item->{'itemnumber'} );
-            $item->{'holdingbranch'} = $branch;    # update item data holdingbranch too
+        if ( $item->{holdingbranch} ne $branch ) {
+            $$moditem{holdingbranch} = $branch;
+            $item->{holdingbranch} = $branch;    # update item data holdingbranch too
         }
     }
 
-    ModDateLastSeen( $item->{'itemnumber'} );
+    my $today = C4::Dates->new();
+    $$moditem{datelastseen} = $today->output("iso"),
+    $$moditem{itemlost} = 0;
+    ModItem( $moditem, $issue->{'biblionumber'}, $item->{'itemnumber'} );
 
     # check if we have a transfer for this document
     my ( $datesent, $frombranch, $tobranch ) = GetTransfers( $item->{'itemnumber'} );
