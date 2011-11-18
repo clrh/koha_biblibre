@@ -128,7 +128,7 @@ process_previous_records( $filepath );
 my %records;
 
 # Nowait because we want to check on delay
-my $file = File::Tail->new( name => $filepath, max_interval => $MAX_INTERVAL, nowait => 1 );
+my $file = File::Tail->new( name => $filepath, max_interval => $MAX_INTERVAL, nowait => 1, resetafter => 10 );
 
 # Main loop
 my $continue = 1; # We always continue
@@ -285,8 +285,9 @@ sub remove_indexed_records {
     $logger and $logger->write("Removing records ($recordtype " . join(',', @$recordids) . ") from file");
     tie my @lines, 'Tie::File', $fh;
     for my $line ( @lines ) {
-        $line =~ s/^$recordtype.*\K $_// for @$recordids;
-        $line =~ s/^$recordtype$//;
+        $line =~ s/^$recordtype(?: \d*)*\K $_( |$)/$1/ for @$recordids;
+        $line =~ s/^\S+$//;
+        $line =~ s/^$recordtype\s*$//;
     }
     @lines = grep {!/^$/} @lines;
     untie @lines;
