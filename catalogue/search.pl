@@ -266,7 +266,8 @@ if ( $template_type eq 'advsearch' ) {
     $template->param(
         uc( C4::Context->preference("marcflavour") ) => 1,
         search_boxes_loop                            => \@search_boxes_array,
-        indexandavlist                               => $indexandavlist
+        indexandavlist                               => $indexandavlist,
+        availability_indexname                       => C4::Search::Query::getIndexName('availability'),
     );
 
     # load the language limits (for search)
@@ -462,6 +463,7 @@ for my $index ( @$facets_ordered ) {
     }
 }
 
+my $availability_indexname = C4::Search::Query::getIndexName('availability');
 $template->param(
     'total'          => $res->{'pager'}->{'total_entries'},
     'facets'         => 1,
@@ -470,10 +472,10 @@ $template->param(
     'query'          => $q,
     'query_desc'     => $q,
     'search_desc'    => $q,
-    'availability'   => $filters{'int_availability'},
+    'availability'   => $filters{$availability_indexname},
     'count'          => C4::Context->preference('numSearchResults') || 20,
     author_indexname => C4::Search::Query::getIndexName('author'),
-    availability_indexname => C4::Search::Query::getIndexName('availability'),
+    availability_indexname => $availability_indexname,
 );
 
 # VI. BUILD THE TEMPLATE

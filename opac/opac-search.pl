@@ -232,7 +232,8 @@ if ( $template_type && $template_type eq 'advsearch' ) {
         uc( C4::Context->preference("marcflavour") ) => 1,                     # we already did this for UNIMARC
         advsearch                                    => 1,
         search_boxes_loop                            => \@search_boxes_array,
-        indexandavlist                               => $indexandavlist
+        indexandavlist                               => $indexandavlist,
+        availability_indexname                       => C4::Search::Query::getIndexName('availability'),
     );
 
     # use the global setting by default
@@ -535,6 +536,7 @@ if ( @results == 1
     }
 }
 
+my $availability_indexname = C4::Search::Query::getIndexName('availability');
 $template->param(
     'total'          => ( @results == 0 ) ? 0 : $total,
     'opacfacets'     => 1,
@@ -543,14 +545,13 @@ $template->param(
     'query'          => $q,
     'query_desc'     => $query_desc,
     'searchdesc'     => $q,
-    'availability'   => $filters{'int_availability'},
+    'availability'   => $filters{$availability_indexname},
     'count'          => $count,
     'tag'            => $tag,
     countRSS         => C4::Context->preference('numSearchRSSResults') || 50,
     RSS_sort_by      => C4::Search::Query::getIndexName('acqdate'),
     author_indexname => C4::Search::Query::getIndexName('author'),
-    availability_indexname => C4::Search::Query::getIndexName('availability'),
-
+    availability_indexname => $availability_indexname,
 );
 
 # VI. BUILD THE TEMPLATE
