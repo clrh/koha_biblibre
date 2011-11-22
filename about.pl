@@ -47,7 +47,7 @@ my $mysqlVersion  = `mysql -V`;
 my $apacheVersion = `httpd -v`;
 $apacheVersion = `httpd2 -v` unless $apacheVersion;
 $apacheVersion = (`/usr/sbin/apache2 -V`)[0] unless $apacheVersion;
-my $zebraVersion = `zebraidx -V`;
+my $gitVersion = `git describe`;
 
 $template->param(
     kohaVersion   => $kohaVersion,
@@ -57,7 +57,7 @@ $template->param(
     perlIncPath   => [ map { perlinc => $_ }, @INC ],
     mysqlVersion  => $mysqlVersion,
     apacheVersion => $apacheVersion,
-    zebraVersion  => $zebraVersion,
+    gitVersion  => $gitVersion,
 );
 my @component_names = qw/
   Algorithm::CheckDigits
@@ -69,11 +69,16 @@ my @component_names = qw/
   Class::Factory::Util
   Class::Accessor
   Compress::Zlib
+  Crypt::SSLeay
+  Data::SearchEngine
+  Data::SearchEngine::Solr
   DBD::mysql
   DBD::SQLite2
   DBI
   Data::Dumper
   Data::ICal
+  Data::Paginator
+  Data::Pagination
   Date::Calc
   Date::ICal
   Date::Manip
@@ -108,10 +113,15 @@ my @component_names = qw/
   MIME::Base64
   MIME::Lite
   MIME::QuotedPrint
+  Module::List
+  Modern::Perl
+  MooseX::Storage
+  MooseX::Types
   Mail::Sendmail
   Net::LDAP
   Net::LDAP::Filter
   Net::Z3950::ZOOM
+  Net::Z3950::OID
   Number::Format
   PDF::API2
   PDF::API2::Page
@@ -135,6 +145,7 @@ my @component_names = qw/
   Text::Wrap
   Time::HiRes
   Time::localtime
+  Time::Progress
   Unicode::Normalize
   XML::Dumper
   XML::LibXML
@@ -144,6 +155,7 @@ my @component_names = qw/
   XML::Simple
   XML::RSS
   YAML::Syck
+  WebService::Solr
   /;
 
 my @components = ();
@@ -157,7 +169,7 @@ foreach my $component ( sort @component_names ) {
             $version = 'unknown';
         }
     } else {
-        $version = 'module is missing';
+        $version = '<font color="red">module is missing</font>';
     }
     push(
         @components,
