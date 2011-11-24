@@ -802,9 +802,9 @@ sub BuildSummary {
                         $value = $textbefore . $field->data() . $textafter;
                     }
                 } else {
-                    my $subfield = $field->subfield($subtag);
-                    if(defined $subfield) {
-                        $value = $textbefore . $subfield . $textafter;
+                    my @subfields = $field->subfield($subtag);
+                    if(@subfields > 0) {
+                        $value = $textbefore . join (" - ", @subfields) . $textafter;
                     }
                 }
             }
