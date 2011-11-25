@@ -578,6 +578,90 @@ function unHideSubfield(index,labelindex) { // FIXME :: is it used ?
     label = document.getElementById(labelindex);
     label.style.display='none';	
 }
+
+/* Given the id of the field div (eg. 'tag_606_xxxxxxxxxxxx'), this function
+ * remove all cloned subfields and clear all remaining subfields inputs */
+function clear_field(id) {
+    var fielddiv = $("div#"+id);
+
+    /* id does not exist */
+    if(fielddiv.length == 0)
+        return;
+
+    $(fielddiv).find("div.subfield_line").each(function() {
+        /* parentNode is null when element was removed from DOM (by UnCloneField) */
+        if (this.parentNode == null) return;
+
+        var tagsubfield = $(this).find("input.flat").val();
+        /* Remove multiple subfields */
+        $(this).siblings('.subfield_line')
+        .find('input.flat[value="'+tagsubfield+'"]')
+        .parents('div.subfield_line').each(function() {
+            UnCloneField($(this).attr('id'));
+        });
+    });
+    /* Clear remaining fields */
+    $(fielddiv).find('input.input_marceditor').each(function() {
+        $(this).val('');
+    });
+}
+
+/* Add a new subfield to specified field
+ * fieldid: id of the field div (eg. tag_606_xxxxxxxxxxxx)
+ * subfieldtag: tag of subfield to add (eg. 'z')
+ * subfieldvalue: value of subfield
+ * insert_after_subfieldid (optional): id of subfield you want the new subfield
+                                       to be moved after (eg. 'subfield606axxxxxxxx')
+ * If an empty corresponding subfield is found, the value is put into it.
+ * Otherwise, the subfield is cloned (with CloneSubfield).
+ * It returns the id of the subfield div where subfield value was put */
+function add_subfield(fieldid, subfieldtag, subfieldvalue, insert_after_subfieldid) {
+    var fielddiv = $("div#"+fieldid);
+
+    /* id does not exist */
+    if(fielddiv.length == 0)
+        return;
+
+    /* Find the first empty subfield with corresponding subfieldtag
+     * or the last subfield if there are all non-empty */
+    var subfield_input;
+    $(fielddiv).find("div.subfield_line").each(function() {
+        if($(this).find('input.flat').val() == subfieldtag) {
+            subfield_input = $(this).find('.input_marceditor');
+            if($(subfield_input).val() == '') {
+                /* Break the each loop */
+                return false;
+            }
+        }
+    });
+
+    /* Set subfield value in subfield_input if subfield_input is empty,
+     * or clone the subfield and set subfield value into it otherwise */
+    var subfieldid;
+    if(subfield_input) {
+        subfieldid = $(subfield_input).parents('div.subfield_line').attr('id');
+        if($(subfield_input).val() == '') {
+            /* Just copy the value */
+            $(subfield_input).val(subfieldvalue);
+        } else {
+            /* No empty input, clone subfield */
+            CloneField(subfieldid);
+            /* Retrieve cloned subfield */
+            subfieldid = $('#'+subfieldid).next().attr('id');
+            $("#"+subfieldid).find('.input_marceditor').val(subfieldvalue);
+        }
+
+        /* Move subfield if wanted */
+        if(insert_after_subfieldid) {
+            var insert_after_subfield = $('#'+insert_after_subfieldid);
+            if(insert_after_subfield.length) {
+                $("#"+subfieldid).remove().insertAfter(insert_after_subfield);
+            }
+        }
+    }
+
+    return subfieldid;
+}
 //]]>
 </script>
 <link type="text/css" rel="stylesheet" href="<!-- TMPL_VAR NAME="themelang" -->/css/addbiblio.css" />

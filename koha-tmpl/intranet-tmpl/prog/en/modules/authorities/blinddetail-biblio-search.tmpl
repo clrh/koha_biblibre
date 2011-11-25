@@ -3,43 +3,27 @@
 <!-- TMPL_INCLUDE NAME="doc-head-close.inc" -->
 <script type="text/javascript">
     window.onload = go();
-    
+
     function go(){
         var index_start = "<!-- TMPL_VAR NAME='index' -->";
-        var whichfield;
-        try {
-            whichfield = opener.opener.document.getElementById(index_start);
-        } catch(e) {
-            return;
-        }
-        
-        // browse all its subfields
-        var subfields = whichfield.parentNode.parentNode.getElementsByTagName('input');
-        var re = /^tag_\d*_code_/;
-        for(var i=0, len = subfields.length ; i< len ; i++) { // browse all subfields
-            if(subfields[i].getAttribute('name').match(re)){ // it s a subfield
-                var code     = subfields[i];   // code is the first input 
-                var subfield = subfields[i+1]; // subfield the second
-            <!-- TMPL_IF NAME="clear" -->
-                if (subfield){subfield.value="" ;}
-            <!--TMPL_ELSE-->      
-            <!-- TMPL_LOOP NAME="0XX" -->
-                <!-- TMPL_LOOP NAME="subfield" -->
-                    if (code.value == "<!-- TMPL_VAR ESCAPE="JS" NAME="marc_subfield" -->"){
-                        subfield.value = "<!-- TMPL_VAR ESCAPE="JS" NAME="marc_value" -->";
-                    }
-                <!-- /TMPL_LOOP -->
-            <!-- /TMPL_LOOP -->
-                if(code.value=='9'){
-                        subfield.value = "<!-- TMPL_VAR ESCAPE="JS" NAME="authid" -->";
-                }
-            <!--/TMPL_IF-->
-            }
-        }
-      	opener.close();
-       	window.close();
-            
-       	return false;
+        var fieldid = $("#"+index_start, opener.opener.document).parents('div.tag').attr('id');
+
+        opener.opener.clear_field(fieldid);
+        var subfieldid;
+        <!-- TMPL_LOOP NAME="subfields_loop" -->
+            subfieldid = opener.opener.add_subfield(
+                fieldid,
+                "<!-- TMPL_VAR NAME='marc_subfield' -->",
+                "<!-- TMPL_VAR NAME='marc_value' ESCAPE='JS' -->",
+                subfieldid
+            );
+        <!-- /TMPL_LOOP -->
+        opener.opener.add_subfield(fieldid, '9', "<!-- TMPL_VAR NAME='authid' -->");
+
+        opener.close();
+        window.close();
+
+        return false;
     }
 </script>
 </head>
@@ -47,7 +31,7 @@
 
 <div id="doc" class="yui-t7">
    <div id="bd">
-	<div class="yui-g">
+    <div class="yui-g">
 
 
 
