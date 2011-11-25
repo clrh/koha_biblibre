@@ -3,7 +3,7 @@
 <!-- TMPL_INCLUDE NAME="doc-head-close.inc" -->
 <script type="text/javascript">
     window.onload = go();
-    
+
     function go(){
         var index_start = "<!-- TMPL_VAR NAME='index' -->";
         var whichfield;
@@ -12,21 +12,45 @@
         } catch(e) {
             return;
         }
-        
+
         // browse all its subfields
         var subfields = whichfield.parentNode.parentNode.getElementsByTagName('input');
         var re = /^tag_\d*_code_/;
-        for(var i=0, len = subfields.length ; i< len ; i++) { // browse all subfields
+        for(var i=0 ; i< subfields.length ; i++) { // browse all subfields
             if(subfields[i].getAttribute('name').match(re)){ // it s a subfield
                 var code     = subfields[i];   // code is the first input 
                 var subfield = subfields[i+1]; // subfield the second
             <!-- TMPL_IF NAME="clear" -->
                 if (subfield){subfield.value="" ;}
-            <!--TMPL_ELSE-->      
+            <!--TMPL_ELSE-->
             <!-- TMPL_LOOP NAME="0XX" -->
                 <!-- TMPL_LOOP NAME="subfield" -->
                     if (code.value == "<!-- TMPL_VAR ESCAPE="JS" NAME="marc_subfield" -->"){
-                        subfield.value = "<!-- TMPL_VAR ESCAPE="JS" NAME="marc_value" -->";
+                        /* Remove repeated subfields first */
+                        /* Select all 'code' inputs where value is equal to code.value */
+                        /* excepted the first, whose value will be erased */
+                        $(subfields).filter('input.flat[value="'+code.value+'"]')
+                        .not('.indicator').filter(':gt(0)').each(function() {
+                            opener.opener.UnCloneField($(this).parents('div').attr('id'));
+                        });
+                        <!-- TMPL_LOOP NAME='marc_value' -->
+                            <!-- TMPL_IF NAME='__first__' -->
+                                /* Replace the value of subfield with the value
+                                 * of the first subfield of this authority */
+                                subfield.value = "<!-- TMPL_VAR ESCAPE="JS" NAME="value" -->";
+                            <!-- TMPL_ELSE -->
+                                var div = $(subfield).parent('div');
+                                /* And clone the subfield for the others values */
+                                /* if field is repeatable */
+                                if($(div).find('.buttonPlus').length > 0) {
+                                    opener.opener.CloneSubfield($(div).attr('id'));
+                                    $(div).next('div').find('input.input_marceditor')
+                                        .val("<!-- TMPL_VAR ESCAPE='JS' NAME='value' -->");
+                                    /* Skip this new subfield, otherwise it will clone forever */
+                                    i+=2;
+                                }
+                            <!-- /TMPL_IF -->
+                        <!-- /TMPL_LOOP -->
                     }
                 <!-- /TMPL_LOOP -->
             <!-- /TMPL_LOOP -->
@@ -36,10 +60,10 @@
             <!--/TMPL_IF-->
             }
         }
-      	opener.close();
-       	window.close();
-            
-       	return false;
+        opener.close();
+        window.close();
+
+        return false;
     }
 </script>
 </head>
@@ -47,7 +71,7 @@
 
 <div id="doc" class="yui-t7">
    <div id="bd">
-	<div class="yui-g">
+    <div class="yui-g">
 
 
 
