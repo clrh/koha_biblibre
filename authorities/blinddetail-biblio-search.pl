@@ -85,11 +85,10 @@ if ($authid) {
         my %result;
         for my $i ( 0 .. $#subf ) {
             $subf[$i][0] = "@" unless $subf[$i][0];
-            $result{ $subf[$i][0] } .= $subf[$i][1] . "|";
+            push @{ $result{ $subf[$i][0] } }, { value => $subf[$i][1] };
         }
         foreach ( keys %result ) {
             my %subfield_data;
-            chop $result{$_};
             $subfield_data{marc_value}    = $result{$_};
             $subfield_data{marc_subfield} = $_;
 
