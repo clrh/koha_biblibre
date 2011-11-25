@@ -70,7 +70,7 @@ function verify_images() {
         <!-- TMPL_IF name="MARCAUTHORS" -->
             <li><strong>Additional Authors:</strong><ul>
             <!-- TMPL_LOOP NAME="MARCAUTHORS" -->
-                <li><!-- TMPL_LOOP NAME="MARCAUTHOR_SUBFIELDS_LOOP" --><!-- TMPL_VAR NAME="separator" --><a title="&#8225;<!-- TMPL_VAR NAME="code" --> <!-- TMPL_VAR NAME="value" escape="url" -->" href="/cgi-bin/koha/catalogue/search.pl?q=*:*&amp;filters=<!-- TMPL_LOOP NAME="link_loop" --><!-- TMPL_VAR NAME="authid_index_name" -->:<!-- TMPL_VAR NAME="link" ESCAPE="url" --><!-- /TMPL_LOOP -->"><!-- TMPL_VAR NAME="value" --></a><!-- /TMPL_LOOP --></li>
+                <li><!-- TMPL_LOOP NAME="MARCAUTHOR_SUBFIELDS_LOOP" --><!-- TMPL_VAR NAME="separator" --><a title="&#8225;<!-- TMPL_VAR NAME="code" --> <!-- TMPL_VAR NAME="value" escape="url" -->" href="/cgi-bin/koha/catalogue/search.pl?q=<!-- TMPL_LOOP NAME="link_loop" --><!-- TMPL_VAR NAME="authid_index_name" -->:<!-- TMPL_VAR NAME="link" ESCAPE="url" --><!-- TMPL_UNLESS VAR="__LAST__" --> AND <!-- /TMPL_UNLESS --><!-- /TMPL_LOOP -->"><!-- TMPL_VAR NAME="value" --></a><!-- /TMPL_LOOP --></li>
                 <!-- /TMPL_LOOP -->
 
         </ul>

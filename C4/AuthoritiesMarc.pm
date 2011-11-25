@@ -113,10 +113,12 @@ counts Usage of Authid in bibliorecords.
 
 sub CountUsage {
 
-    my $results = C4::Search::SimpleSearch( "*:*", {
-        recordtype => 'biblio',
-        int_authid     => shift,
-    } );
+    my $results = C4::Search::SimpleSearch(
+        "int_authid:" . shift,
+        {
+            recordtype => 'biblio',
+        }
+    );
 
     return $results->pager->{total_entries};
 }
