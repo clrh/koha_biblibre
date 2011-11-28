@@ -83,24 +83,22 @@ if ($batch) {
         $cgidir = C4::Context->intranetdir;
         opendir( DIR, "$cgidir/tmp/modified_authorities" ) || die "can't opendir $cgidir/tmp/modified_authorities: $!";
     }
-    while ( my $authid = readdir(DIR) ) {
-        if ( $authid =~ /\.authid$/ ) {
+    while ( my $authid_filename = readdir(DIR) ) {
+        if ( $authid_filename =~ /\.authid$/ ) {
+            my $authid = $authid_filename;
             $authid =~ s/\.authid$//;
             print "managing $authid\n" if $verbose;
-            my $MARCauth = GetAuthority($authid);
-            next unless ($MARCauth);
-            merge( $authid, $MARCauth, $authid, $MARCauth ) if ($MARCauth);
+            my $authfrom = retrieve $authid_filename;
+            merge( $authid, $authfrom, $authid, $authto ) ;
             unlink $cgidir . '/tmp/modified_authorities/' . $authid . '.authid';
         }
     }
     closedir DIR;
 } else {
-    my $MARCfrom = GetAuthority($mergefrom);
-    my $MARCto   = GetAuthority($mergeto);
-    &merge( $mergefrom, $MARCfrom, $mergeto, $MARCto );
-
-    #Could add mergefrom authority to mergeto rejected forms before deletion
-    DelAuthority($mergefrom) unless ($mergefrom==$mergeto);
+    if (merge( $mergefrom, $authfrom, $mergeto, $authto )){
+        #Could add mergefrom authority to mergeto rejected forms before deletion
+        DelAuthority($mergefrom) unless ($mergefrom==$mergeto);
+    }
 }
 my $timeneeded = gettimeofday - $starttime;
 print "Done in $timeneeded seconds" unless $noconfirm;
