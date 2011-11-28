@@ -238,7 +238,7 @@ function highlightOn() {
 					<!-- TMPL_IF NAME="branchname" --><!-- TMPL_VAR NAME="branchname" --><!-- /TMPL_IF -->
 					<!-- TMPL_IF name="OPACItemsResultsDisplay" -->
                         <!-- TMPL_IF NAME="location" --><!-- TMPL_VAR NAME="location" --><!-- /TMPL_IF -->
-                        <!-- TMPL_IF NAME="itemcallnumber" -->[<a href="/cgi-bin/koha/opac-search.pl?q=itemcallnumber:<!-- TMPL_VAR NAME="itemcallnumber" ESCAPE="URL" -->"><!-- TMPL_VAR NAME="itemcallnumber" --></a>]<!-- /TMPL_IF -->
+                        <!-- TMPL_IF NAME="itemcallnumber" -->[<a href='/cgi-bin/koha/opac-search.pl?q=itemcallnumber:&quot;<!-- TMPL_VAR NAME="itemcallnumber" ESCAPE="JS" -->&quot;'><!-- TMPL_VAR NAME="itemcallnumber" --></a>]<!-- /TMPL_IF -->
                     <!-- /TMPL_IF -->
 					(<!-- TMPL_VAR NAME="count" -->),
 					<!-- /TMPL_LOOP -->
@@ -272,7 +272,7 @@ function highlightOn() {
 				<!-- /TMPL_IF -->
 
 				<!--TMPL_IF EXPR="opacbookbag || virtualshelves" --><input type="checkbox" name="biblionumber" value="<!-- TMPL_VAR NAME="biblionumber" -->" title="Click to add to cart" /> <label for="bib<!-- TMPL_VAR NAME="biblionumber" -->"><!-- /TMPL_IF --><img src="<!-- TMPL_VAR NAME="themelang" -->/images/<!-- TMPL_VAR NAME="itemtype" -->.gif" alt="<!-- TMPL_VAR NAME="ccode" -->" title="<!-- TMPL_VAR NAME="ccode" -->" /><!--TMPL_IF EXPR="opacbookbag || virtualshelves" --></label><!-- /TMPL_IF --> <!-- TMPL_IF name="classification" -->
-                                    <a href="/cgi-bin/koha/opac-search.pl?q=itemcallnumber:<!-- TMPL_VAR NAME="classification" ESCAPE="URL" -->">
+                                    <a href='/cgi-bin/koha/opac-search.pl?q=itemcallnumber:&quot;<!-- TMPL_VAR NAME="classification" ESCAPE="JS" -->&quot;'>
                                         <!-- TMPL_VAR NAME="classification" -->
                                     </a>
 <!-- /TMPL_IF --></p>

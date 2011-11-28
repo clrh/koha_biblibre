@@ -90,7 +90,7 @@
                         <!-- TMPL_IF name="location" --><!-- TMPL_VAR name="location" --><!-- /TMPL_IF -->
                         <!-- TMPL_IF name="itemcallnumber" --><!-- TMPL_VAR name="itemcallnumber" --><!-- /TMPL_IF -->
                             <!-- TMPL_IF name="classification" -->
-                            <a href="/cgi-bin/koha/catalogue/search.pl?q=itemcallnumber:<!-- TMPL_VAR NAME="classification" ESCAPE="URL" -->">
+                            <a href='/cgi-bin/koha/catalogue/search.pl?q=itemcallnumber:&quot;<!-- TMPL_VAR NAME="classification" ESCAPE="JS" -->&quot;'>
                                 <!-- TMPL_VAR NAME="classification" -->
                             </a>
                         <!-- /TMPL_IF -->
