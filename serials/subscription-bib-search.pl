@@ -82,7 +82,7 @@ if ( $op eq "do_search" && $query ) {
     my $filters = { recordtype => 'biblio' };
     $$filters{$itype_indexname} = $itemtypelimit if $itemtypelimit;
 
-    my $res = SimpleSearch( $query, $filters, $page, $count);
+    my $res = SimpleSearch( $query, $filters, { page => $page, count => $count } );
     my @results = map { GetBiblioData $_->{'values'}->{'recordid'} } @{ $res->items };
 
     my $pager = Data::Pagination->new(

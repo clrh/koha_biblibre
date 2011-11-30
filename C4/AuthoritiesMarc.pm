@@ -116,9 +116,8 @@ sub CountUsage {
 
     my $results = C4::Search::SimpleSearch(
         "int_authid:" . shift,
-        {
-            recordtype => 'biblio',
-        }
+        { recordtype => 'biblio' },
+        { page => 1, count => 1 }
     );
 
     return $results->pager->{total_entries};
@@ -716,7 +715,7 @@ sub FindDuplicateAuthority {
     }
 
     $query = C4::Search::Query->normalSearch($query);
-    my $results = C4::Search::SimpleSearch($query);
+    my $results = C4::Search::SimpleSearch($query, undef, { page => 1, count => 1 });
 
     # there is at least 1 result => return the 1st one
     if ( @{$results->items} > 0 ) {

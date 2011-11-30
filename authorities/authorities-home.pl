@@ -54,10 +54,13 @@ if ( $op eq "do_search" ) {
         C4::Search::Query::getIndexName('auth-type') => $authtypecode
     };
 
+    my $authid_index_name = C4::Search::Query::getIndexName('authid');
+    my $authtype_index_name = C4::Search::Query::getIndexName('auth-type');
+
     my $index = GetIndexBySearchtype( $searchtype );
     my $q = "$index:$value";
     $q = C4::Search::Query->normalSearch($q);
-    my $results = SimpleSearch($q, $filters, $page, $count, $orderby);
+    my $results = SimpleSearch($q, $filters, { page => $page, count => $count, sort => $orderby, fl => [$authid_index_name, $authtype_index_name] } );
     C4::Context->preference("DebugLevel") eq '2' && warn "AuthSolrSimpleSearch:q=$q:";
 
     my $pager = Data::Pagination->new(
@@ -90,8 +93,6 @@ if ( $op eq "do_search" ) {
         authtypecode  => $authtypecode
     );
 
-    my $authid_index_name = C4::Search::Query::getIndexName('authid');
-    my $authtype_index_name = C4::Search::Query::getIndexName('auth-type');
     my @resultrecords;
     for ( @{$results->{items}} ) {
         my $authrecord = GetAuthority( $_->{values}->{recordid} );

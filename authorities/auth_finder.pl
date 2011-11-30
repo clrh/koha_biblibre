@@ -99,7 +99,7 @@ if ( $op eq 'do_search' ) {
 
     # Construct and Perform the query
     my $q = C4::Search::Query->buildQuery( $indexes, $operands, $operators );
-    my $results = SimpleSearch( $q, $filters, $page, $count, $orderby );
+    my $results = SimpleSearch( $q, $filters, { page => $page, count => $count, sort => $orderby, fl => [$authtype_indexname] } );
 
     # If no resuls, we search on summary index
     # In fact, we search string returned by autocompletion
@@ -107,7 +107,7 @@ if ( $op eq 'do_search' ) {
         my $indexes = ();
         my $operands = ();
         my $operators = ();
-     
+
         my $summary_index = C4::Search::Query::getIndexName('auth-summary');
         for my $searchtype (@searchtypes) {
             my $value = $query->param($searchtype);
@@ -122,7 +122,7 @@ if ( $op eq 'do_search' ) {
         }
 
         $q = C4::Search::Query->buildQuery( $indexes, $operands, $operators );
-        $results = SimpleSearch( $q, $filters, $page, $count, $orderby );
+        $results = SimpleSearch( $q, $filters, { page => $page, count => $count, sort => $orderby, fl => [$authtype_indexname] } );
     }
 
     my @resultdatas = map {

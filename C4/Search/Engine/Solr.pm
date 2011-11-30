@@ -280,13 +280,16 @@ sub FillSubfieldWithAuthorisedValues {
 
 Search function for Solr Engine.
 
-params: 
-  $q           = solr's query
-  $filters     = hashref (ex: {recordtype => 'biblio'}
-                or {ste_author => ['knuth', 'pratt'] }
-  $page        = page number for pagination
-  $max_results = max returned results
-  $sort        = field sorting
+params:
+  $q       = solr's query
+  $filters = hashref (ex: {recordtype => 'biblio'}
+           or {ste_author => ['knuth', 'pratt'] }
+  $params  = a hash with differents values :
+     page   => page number for pagination
+     count  => max returned results
+     sort   => field sorting
+     facets => 1 if you want facetting this result
+     fl     => arrayref field list (id and recordid are automatically pushed in this function)
 
 Before the call: 
   You must call normalSearch or buildQuery function et call SimpleSearch with the query returned
@@ -298,14 +301,14 @@ Examples:
     $query = C4::Search::Query->normalSearch($query);
     my %filters = { recordtype => 'biblio' } # We find in biblios
     my $results = C4::Search::Engine::SimpleSearch($query, \%filters);
-    
+
   We want hits number:
     my $hits = $$results{pager}{total_entries};
-  
+
   print recordids:
     print $_->{'values'}->{'recordid'} for @{ $results->items };
 
-  If we watn a adv search, we have 3 arrays : indexes, operands and operators
+  If we want an adv search, we have 3 arrays : indexes, operands and operators
   We must call buildquery: 
   my @indexes = ("title", "author");
   my @operators = ("and");
@@ -325,13 +328,25 @@ Examples:
 =cut
 
 sub SimpleSearch {
-    my ( $q, $filters, $page, $max_results, $sort) = @_;
+    my ( $q, $filters, $params ) = @_;
 
-    $q           ||= '*:*';
-    $filters     ||= {};
-    $page        ||= 1;
-    $max_results ||= 999999999;
-    $sort        ||= 'score desc';
+    $q         ||= '*:*';
+    $filters   ||= {};
+    my $page   = defined $params->{page}   ? $params->{page}   : 1;
+    my $count  = defined $params->{count}  ? $params->{count}  : 999999999;
+    my $sort   = defined $params->{sort}   ? $params->{sort}   : 'score desc';
+    my $facets = defined $params->{facets} ? $params->{facets} : 0;
+
+    # Construct fl from $params->{fl}
+    # If "recordid" or "id" not exist, we push them
+    my $fl = join ",",
+        defined $params->{fl}
+            ? (
+                @{$params->{fl}},
+                grep ( /^recordid$/, @{$params->{fl}} ) ? () : "recordid",
+                grep ( /^id$/, @{$params->{fl}} ) ? () : "id"
+              )
+            : ( "recordid", "id" );
 
     # sort is done on srt_* fields
     $sort =~ s/(^|,)\s*(str|txt|int|date|ste)_/$1srt_$2_/g;
@@ -342,11 +357,15 @@ sub SimpleSearch {
                     ? $filters->{recordtype}[0]
                     : $filters->{recordtype}
                 if defined $filters && defined $filters->{recordtype};
-    $sc->options->{'facet'}          = 'true';
-    $sc->options->{'facet.mincount'} = 1;
-    $sc->options->{'facet.limit'}    = C4::Context->preference("numFacetsDisplay") || 10;
-    $sc->options->{'facet.field'}    = GetFacetedIndexes($recordtype);
-    $sc->options->{'sort'}           = $sort;
+
+    if ( $facets ) {
+        $sc->options->{"facet"}          = 'true';
+        $sc->options->{"facet.mincount"} = 1;
+        $sc->options->{"facet.limit"}    = C4::Context->preference("numFacetsDisplay") || 10;
+        $sc->options->{"facet.field"}    = GetFacetedIndexes($recordtype);
+    }
+    $sc->options->{"sort"}           = $sort;
+    $sc->options->{"fl"}             = $fl;
 
     # Construct filters
     $sc->options->{'fq'} = [
@@ -375,7 +394,7 @@ sub SimpleSearch {
     utf8::decode($q);
     my $sq = Data::SearchEngine::Query->new(
         page  => $page,
-        count => $max_results,
+        count => $count,
         query => $q,
     );
 
@@ -396,7 +415,7 @@ sub SimpleSearch {
        $$result{error} = $err;
     }
 
-    return $result; # if (ref($result) eq "Data::SearchEngine::Solr::Results");
+    return $result;
 }
 
 =head2 AddRecordToIndexRecordQueue

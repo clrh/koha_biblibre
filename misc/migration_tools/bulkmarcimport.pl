@@ -303,7 +303,7 @@ RECORD: while () {
             $filters->{$ind} = $valuefilter;
         }
 
-        my $results = C4::Search::SimpleSearch( '*:*', $filters );
+        my $results = C4::Search::SimpleSearch( '*:*', $filters, { page => 1, count => 1 } );
         my $totalhits = (defined $results?$results->{'pager'}->{'total_entries'}:0);
         $debug && warn "query :",Dump($filters)," $recordtype : $totalhits";
         if ( $results && $totalhits == 1 ) {

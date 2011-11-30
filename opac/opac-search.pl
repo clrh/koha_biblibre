@@ -351,7 +351,7 @@ my $q_mod = $end_query
 $query_desc = $q if not $tag;
 
 # perform the search
-my $res = SimpleSearch( $q_mod, \%filters, $page, $count, $sort_by);
+my $res = SimpleSearch( $q_mod, \%filters, { page => $page, count => $count, sort => $sort_by, facets => 1 } );
 C4::Context->preference("DebugLevel") eq '2' && warn "OpacSolrSimpleSearch:q=$q_mod:";
 
 if ($$res{error}){

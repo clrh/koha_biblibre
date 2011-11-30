@@ -89,7 +89,7 @@ AND (authtypecode IS NOT NULL AND authtypecode<>\"\")|
             };
             my $name_index = C4::Search::Query::getIndexName('auth-heading');
             for ( $field->subfields ) { $query .= qq{ AND $name_index:"$_->[1]"} if $_->[0] =~ /[A-z]/ };
-            my $res = SimpleSearch( $query, $filters );
+            my $res = SimpleSearch( $query, $filters, { page => 1, count => 1 } );
             my $hits = $$res{'pager'}{'total_entries'};
             if ( !$$res{error} and $hits == 1 ) {
                 my $item = @{ $res->items }[0];

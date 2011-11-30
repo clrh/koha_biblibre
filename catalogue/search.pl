@@ -362,7 +362,7 @@ if ( $limit_yr ) {
 
 my $q = C4::Search::Query->buildQuery(\@indexes, \@operands, \@operators);
 
-my $res = SimpleSearch( $q, \%filters, $page, $count, $sort_by);
+my $res = SimpleSearch( $q, \%filters, { page => $page, count => $count, sort => $sort_by, facets => 1 } );
 C4::Context->preference("DebugLevel") eq '2' && warn "ProSolrSimpleSearch:q=$q:";
 
 if ($$res{error}){
