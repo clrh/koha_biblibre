@@ -47,8 +47,7 @@ BEGIN {
       &GetBibliosShelves
     );
     @EXPORT_OK = qw(
-      &GetShelvesSummary &GetRecentShelves
-      &RefreshShelvesSummary &SetShelvesLimit
+      &GetShelvesSummary &GetRecentShelves &SetShelvesLimit
     );
 }
 
@@ -202,19 +201,24 @@ the submitted parameters.
 
 sub GetRecentShelves ($$$) {
     my ( $mincategory, $row_count, $owner ) = @_;
-    my (@shelflist);
-    my $total = _shelf_count( $owner, $mincategory );
+
     my @params = ( $owner, $mincategory );
     push @params, $row_count if ( defined $row_count );
     shift @params if ( not defined $owner );
-    my $query = "SELECT * FROM virtualshelves";
+
+    my $query = "SELECT SQL_CALC_FOUND_ROWS * FROM virtualshelves";
     $query .= ( ( defined $owner ) ? " WHERE owner = ? AND category = ?" : " WHERE category >= ? " );
     $query .= " ORDER BY lastmodified DESC";
     $query .= " LIMIT ?" if ( defined $row_count );
     my $sth = $dbh->prepare($query);
     $sth->execute(@params);
-    @shelflist = $sth->fetchall_arrayref( {} );
-    return ( \@shelflist, $total );
+    my $shelflist = $sth->fetchall_arrayref( {} );
+
+    $sth = $dbh->prepare("SELECT FOUND_ROWS()");
+    $sth->execute;
+    my ($total) = $sth->fetchrow_array;
+
+    return ( $shelflist, $total );
 }
 
 =item GetShelf
@@ -554,43 +558,6 @@ sub GetBibliosShelves {
     ' );
     $sth->execute($biblionumber);
     return $sth->fetchall_arrayref( {} );
-}
-
-=item RefreshShelvesSummary
-
-	($total, $pubshelves, $barshelves) = RefreshShelvesSummary($sessionID, $loggedinuser, $row_count);
-
-Updates the current session and userenv with the most recent shelves
-
-Returns the total number of shelves stored in the session/userenv along with two references each to an
-array of hashes, one containing the C<$loggedinuser>'s private shelves and one containing all public/open shelves.
-
-This function is used in conjunction with the 'Lists' button in masthead.inc.
-
-=cut
-
-sub RefreshShelvesSummary ($$$) {
-
-    my ( $sessionID, $loggedinuser, $row_count ) = @_;
-    my $session = C4::Auth::get_session($sessionID);
-    my ( $total, $totshelves, $barshelves, $pubshelves );
-
-    ( $barshelves, $totshelves ) = GetRecentShelves( 1, undef, $loggedinuser );
-    $total->{'bartotal'} = $totshelves;
-    ( $pubshelves, $totshelves ) = GetRecentShelves( 2, $row_count, undef );
-    $total->{'pubtotal'} = $totshelves;
-
-    # Update the current session with the latest shelves...
-    $session->param( 'barshelves', $barshelves->[0] );
-    $session->param( 'pubshelves', $pubshelves->[0] );
-    $session->param( 'totshelves', $total );
-
-    # likewise the userenv...
-    C4::Context->set_shelves_userenv( 'bar', $barshelves->[0] );
-    C4::Context->set_shelves_userenv( 'pub', $pubshelves->[0] );
-    C4::Context::set_shelves_userenv( 'tot', $total );
-
-    return ( $total, $pubshelves, $barshelves );
 }
 
 # internal subs

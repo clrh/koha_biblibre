@@ -483,21 +483,19 @@ $template->param(
 # Build drop-down list for 'Add To:' menu...
 
 my $row_count = 10;    # FIXME:This probably should be a syspref
-my ( $pubshelves, $barshelves, $total );
-( $pubshelves, $total ) = GetRecentShelves( 2, $row_count, undef );
-( $barshelves, $total ) = GetRecentShelves( 1, undef,      $borrowernumber );
 
-my @pubshelves = @{$pubshelves};
-my @barshelves = @{$barshelves};
-
-if (@pubshelves) {
-    $template->param( addpubshelves     => scalar(@pubshelves) );
-    $template->param( addpubshelvesloop => @pubshelves );
+my ($pubshelves) = GetRecentShelves( 2, $row_count, $borrowernumber );
+my ($openshelves) = GetRecentShelves( 3, $row_count, undef );
+push @$pubshelves, @$openshelves;
+if ($pubshelves) {
+    $template->param( addpubshelves     => scalar(@$pubshelves) );
+    $template->param( addpubshelvesloop => $pubshelves );
 }
 
-if (@barshelves) {
-    $template->param( addbarshelves     => scalar(@barshelves) );
-    $template->param( addbarshelvesloop => @barshelves );
+my ($barshelves) = GetRecentShelves( 1, undef, $borrowernumber );
+if ($barshelves) {
+    $template->param( addbarshelves     => scalar(@$barshelves) );
+    $template->param( addbarshelvesloop => $barshelves );
 }
 
 output_html_with_http_headers $cgi, $cookie, $template->output;

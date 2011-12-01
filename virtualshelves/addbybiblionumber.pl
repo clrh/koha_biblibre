@@ -153,14 +153,21 @@ if ( $shelfnumber || ( $shelfnumber == -1 ) ) {    # the shelf already exist.
     my ($shelflist) = GetRecentShelves( 1, undef, $loggedinuser );
     my @shelvesloop;
     my %shelvesloop;
-    for my $shelf ( @{ $shelflist->[0] } ) {
+    for my $shelf ( @$shelflist ) {
+        push( @shelvesloop, $shelf->{shelfnumber} );
+        $shelvesloop{ $shelf->{shelfnumber} } = $shelf->{shelfname};
+    }
+
+    # then public shelves...
+    ($shelflist) = GetRecentShelves( 2, $limit, $loggedinuser );
+    for my $shelf ( @$shelflist ) {
         push( @shelvesloop, $shelf->{shelfnumber} );
         $shelvesloop{ $shelf->{shelfnumber} } = $shelf->{shelfname};
     }
 
     # then open shelves...
     ($shelflist) = GetRecentShelves( 3, $limit, undef );
-    for my $shelf ( @{ $shelflist->[0] } ) {
+    for my $shelf ( @$shelflist ) {
         push( @shelvesloop, $shelf->{shelfnumber} );
         $shelvesloop{ $shelf->{shelfnumber} } = $shelf->{shelfname};
     }

@@ -23,7 +23,7 @@ package C4::VirtualShelves::Page;
 use strict;
 use warnings;
 use CGI;
-use C4::VirtualShelves qw/:DEFAULT RefreshShelvesSummary/;
+use C4::VirtualShelves qw/:DEFAULT/;
 use C4::Biblio;
 use C4::Items;
 use C4::Koha;
@@ -352,24 +352,6 @@ sub shelfpage ($$$$$) {
     #       to the shelves, but the above code is so convoluted in its handling of the various
     #       options, it is easier to do this refresh every time C4::VirtualShelves::Page.pm is
     #       called
-
-    my ( $total, $pubshelves, $barshelves ) = RefreshShelvesSummary( $query->cookie("CGISESSID"), $loggedinuser, ( $loggedinuser == -1 ? 20 : 10 ) );
-
-    if ( defined $barshelves ) {
-        $template->param(
-            barshelves     => scalar( @{ $barshelves->[0] } ),
-            barshelvesloop => $barshelves->[0],
-        );
-        $template->param( bartotal => $total->{'bartotal'}, ) if ( $total->{'bartotal'} > scalar( @{ $barshelves->[0] } ) );
-    }
-
-    if ( defined $pubshelves ) {
-        $template->param(
-            pubshelves     => scalar( @{ $pubshelves->[0] } ),
-            pubshelvesloop => $pubshelves->[0],
-        );
-        $template->param( pubtotal => $total->{'pubtotal'}, ) if ( $total->{'pubtotal'} > scalar( @{ $pubshelves->[0] } ) );
-    }
 
     output_html_with_http_headers $query, $cookie, $template->output;
 }

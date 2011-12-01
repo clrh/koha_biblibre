@@ -27,7 +27,7 @@ use warnings;
 
 use C4::Biblio;
 use CGI;
-use C4::VirtualShelves qw/:DEFAULT GetRecentShelves RefreshShelvesSummary/;
+use C4::VirtualShelves qw/:DEFAULT GetRecentShelves/;
 use C4::Auth;
 use C4::Output;
 use C4::Auth qw/get_session/;
@@ -65,7 +65,6 @@ my ( $template, $loggedinuser, $cookie ) = get_template_and_user(
 if ($newvirtualshelf) {
     $shelfnumber = AddShelf( $newvirtualshelf, $loggedinuser, $category );
     AddBibliosToShelf( $shelfnumber, @biblionumber );
-    RefreshShelvesSummary( $query->cookie("CGISESSID"), $loggedinuser, ( $loggedinuser == -1 ? 20 : 10 ) );
     print $query->header;
     print
 "<html><meta http-equiv=\"refresh\" content=\"0;url=opac-shelves.pl?display=privateshelves\" /><body onload=\"window.opener.location.reload(true);self.close();\"></body></html>";
@@ -80,7 +79,6 @@ if ($selectedshelf) {
 
 if ( $shelfnumber && ( $shelfnumber != -1 ) ) {
     AddBibliosToShelf( $shelfnumber, @biblionumber );
-    RefreshShelvesSummary( $query->cookie("CGISESSID"), $loggedinuser, ( $loggedinuser == -1 ? 20 : 10 ) );
     print $query->header;
     print "<html><meta http-equiv=\"refresh\" content=\"0;url=opac-shelves.pl?display=privateshelves\" /><body onload=\"self.close();\"></body></html>";
     exit;
@@ -105,7 +103,7 @@ if ( $shelfnumber && ( $shelfnumber != -1 ) ) {
         #grab each type of shelf, open (type 3) should not be limited by user.
         foreach my $shelftype ( 1, 2, 3 ) {
             my ($shelflist) = GetRecentShelves( $shelftype, $shelftype == 1 ? undef : $limit, $shelftype == 3 ? undef : $loggedinuser );
-            for my $shelf ( @{ $shelflist->[0] } ) {
+            for my $shelf ( @$shelflist ) {
                 push( @shelvesloop, $shelf->{shelfnumber} );
                 $shelvesloop{ $shelf->{shelfnumber} } = $shelf->{shelfname};
             }
