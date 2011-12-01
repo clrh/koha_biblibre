@@ -2775,6 +2775,11 @@ sub AddToIndexQueue {
 sub SimpleSearch {
     my $search = C4::Search::Engine->new();
     $search->find_searchengine;
+    while ( scalar @_ < 5 ) {
+        push @_, undef;
+    }
+    my @caller = caller;
+    push @_, { caller_script => $caller[1], caller_linenumber => $caller[2] };
     return $search->search(@_);
 }
 

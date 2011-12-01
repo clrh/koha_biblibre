@@ -325,7 +325,7 @@ Examples:
 =cut
 
 sub SimpleSearch {
-    my ( $q, $filters, $page, $max_results, $sort) = @_;
+    my ( $q, $filters, $page, $max_results, $sort, $caller) = @_;
 
     $q           ||= '*:*';
     $filters     ||= {};
@@ -347,6 +347,8 @@ sub SimpleSearch {
     $sc->options->{'facet.limit'}    = C4::Context->preference("numFacetsDisplay") || 10;
     $sc->options->{'facet.field'}    = GetFacetedIndexes($recordtype);
     $sc->options->{'sort'}           = $sort;
+    $sc->options->{caller}           = $$caller{caller_script} . ":" . $$caller{caller_linenumber}
+        if ( $caller );
 
     # Construct filters
     $sc->options->{'fq'} = [
