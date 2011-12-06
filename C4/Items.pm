@@ -1637,7 +1637,6 @@ sub get_item_authorised_values {
     my $itemlevel_authorised_values = C4::Context->dbh->selectall_hashref( $query, 'authorised_value' );
     my $iteminfo = GetItem($itemnumber);
 
-    # warn( Data::Dumper->Dump( [ $itemlevel_authorised_values ], [ 'itemlevel_authorised_values' ] ) );
     my $return;
     foreach my $this_authorised_value ( keys %$itemlevel_authorised_values ) {
         my $field = $itemlevel_authorised_values->{$this_authorised_value}->{'kohafield'};
@@ -1676,31 +1675,50 @@ sub get_item_authorised_values {
 =cut
 
 sub get_authorised_value_images {
-    my $authorised_values = shift;
+    my ( $biblionumber, $record ) = @_;
 
-    my @imagelist;
+    my $frameworkcode = GetFrameworkCode($biblionumber);
 
-    my $authorised_value_list = GetAuthorisedValues();
-
-    # warn ( Data::Dumper->Dump( [ $authorised_value_list ], [ 'authorised_value_list' ] ) );
-    foreach my $this_authorised_value (@$authorised_value_list) {
-        if ( exists $authorised_values->{ $this_authorised_value->{'category'} }
-            && $authorised_values->{ $this_authorised_value->{'category'} } eq $this_authorised_value->{'authorised_value'} ) {
-
-            # warn ( Data::Dumper->Dump( [ $this_authorised_value ], [ 'this_authorised_value' ] ) );
-            if ( $this_authorised_value->{'imageurl'} ) {
-                push @imagelist,
-                  { imageurl => C4::Koha::getitemtypeimagelocation( 'intranet', $this_authorised_value->{'imageurl'} ),
-                    label    => $this_authorised_value->{'lib'},
-                    category => $this_authorised_value->{'category'},
-                    value    => $this_authorised_value->{'authorised_value'},
-                  };
-            }
-        }
+    my $itype_or_itemtype = ( C4::Context->preference("item-level_itypes") ) ? 'itype' : 'itemtype';
+    my $advanced_search_types = C4::Context->preference("AdvancedSearchTypes");
+    my $itype_or_ccode;
+    if ( !$advanced_search_types or $advanced_search_types eq 'itemtypes' ) {
+        $itype_or_ccode = 'itype';
+    } else {
+       $itype_or_ccode = 'ccode';
     }
 
-    # warn ( Data::Dumper->Dump( [ \@imagelist ], [ 'imagelist' ] ) );
-    return \@imagelist;
+    my $dbh = C4::Context->dbh;
+    my $sth = $dbh->prepare(
+        qq{
+            SELECT tagfield, tagsubfield, authorised_value
+            FROM marc_subfield_structure
+            WHERE frameworkcode = ? AND kohafield = ?
+            LIMIT 1
+        }
+    );
+    $sth->execute( $frameworkcode, "items.$itype_or_ccode" );
+    my $res = $sth->fetchrow_hashref;
+    my $val = $record->subfield( $res->{tagfield}, $res->{tagsubfield} );
+
+    $sth = $dbh->prepare(
+        qq{
+            SELECT imageurl
+            FROM authorised_values
+            WHERE category = ? AND authorised_value = ?
+        }
+    );
+    $sth->execute( $val, $res->{authorised_value} );
+    my @images;
+    while ( my $av = $sth->fetchrow_hashref ) {
+        push @images, {
+            imageurl => C4::Koha::getitemtypeimagelocation( 'intranet', $av->{'imageurl'} ),
+            label    => $av->{'lib'},
+            category => $av->{'category'},
+            value    => $av->{'authorised_value'},
+        }
+    }
+    return \@images;
 
 }
 

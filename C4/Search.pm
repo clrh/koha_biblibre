@@ -1267,7 +1267,7 @@ sub searchResults {
         # add imageurl to itemtype if there is one
         $oldbiblio->{imageurl} = getitemtypeimagelocation( $interface, $itemtypes{ $oldbiblio->{itemtype} }->{imageurl} );
 
-        $oldbiblio->{'authorised_value_images'} = C4::Items::get_authorised_value_images( C4::Biblio::get_biblio_authorised_values( $oldbiblio->{'biblionumber'}, $marcrecord ) );
+        $oldbiblio->{'authorised_value_images'} = C4::Items::get_authorised_value_images( $oldbiblio->{'biblionumber'}, $marcrecord );
         $oldbiblio->{normalized_upc} = GetNormalizedUPC( $marcrecord, $marcflavour );
         $oldbiblio->{normalized_ean} = GetNormalizedEAN( $marcrecord, $marcflavour );
         $oldbiblio->{normalized_oclc} = GetNormalizedOCLCNumber( $marcrecord, $marcflavour );
@@ -1868,7 +1868,7 @@ sub getItemsInfos {
     # add imageurl to itemtype if there is one
     $biblio->{imageurl} = getitemtypeimagelocation( $interface, $itemtypes->{ $biblio->{itemtype} }->{imageurl} );
 
-    $biblio->{'authorised_value_images'} = C4::Items::get_authorised_value_images( C4::Biblio::get_biblio_authorised_values( $biblio->{'biblionumber'}, $marcrecord ) );
+    $biblio->{'authorised_value_images'} = C4::Items::get_authorised_value_images( $biblio->{'biblionumber'}, $marcrecord );
     $biblio->{normalized_upc} = GetNormalizedUPC( $marcrecord, $marcflavour );
     $biblio->{normalized_ean} = GetNormalizedEAN( $marcrecord, $marcflavour );
     $biblio->{normalized_oclc} = GetNormalizedOCLCNumber( $marcrecord, $marcflavour );

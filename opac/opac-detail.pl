@@ -221,7 +221,7 @@ if ( $dat->{'count'} >= 50 && !$viewallitems ) {
     $template->param( 'lotsofitems' => 1 );
 }
 
-my $biblio_authorised_value_images = C4::Items::get_authorised_value_images( C4::Biblio::get_biblio_authorised_values( $biblionumber, $record ) );
+my $biblio_authorised_value_images = C4::Items::get_authorised_value_images( $biblionumber, $record );
 
 my $norequests = 1;
 my $branches   = GetBranches();
@@ -255,17 +255,6 @@ for my $itm (@items) {
     }
     foreach (qw(ccode enumchron copynumber itemnotes uri serialseq publisheddate)) {
         $itemfields{$_} = 1 if ( $itm->{$_} );
-    }
-
-    # walk through the item-level authorised values and populate some images
-    my $item_authorised_value_images = C4::Items::get_authorised_value_images( C4::Items::get_item_authorised_values( $itm->{'itemnumber'} ) );
-
-    # warn( Data::Dumper->Dump( [ $item_authorised_value_images ], [ 'item_authorised_value_images' ] ) );
-
-    if ( $itm->{'itemlost'} ) {
-        my $lostimageinfo = List::Util::first { $_->{'category'} eq 'LOST' } @$item_authorised_value_images;
-        $itm->{'lostimageurl'}   = $lostimageinfo->{'imageurl'};
-        $itm->{'lostimagelabel'} = $lostimageinfo->{'label'};
     }
 
     if ( $itm->{'count_reserves'} ) {
