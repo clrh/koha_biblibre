@@ -48,7 +48,7 @@ sub Init {
         );
     }
     $suggestion->{'managedby'}  = C4::Context->userenv->{"number"} unless ( $suggestion->{'managedby'} );
-    $suggestion->{'createdby'}  = C4::Context->userenv->{"number"} unless ( $suggestion->{'createdby'} );
+    $suggestion->{'suggestedby'}  = C4::Context->userenv->{"number"} unless ( $suggestion->{'suggestedby'} );
     $suggestion->{'branchcode'} = C4::Context->userenv->{"branch"} unless ( $suggestion->{'branchcode'} );
 }
 
