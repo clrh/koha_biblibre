@@ -35,14 +35,24 @@ sub ComputeValue {
             for my $f ( $record->field($tag) ) {
                 for my $sf ($f->subfield($code)){
                     my $isbn = Business::ISBN->new( $sf );
-                    my $isbn10 = $isbn->as_isbn10->as_string;
-                    my $isbn13 = $isbn->as_isbn13->as_string;
-                    push @values, $isbn10;
-                    push @values, $isbn13;
-                    $isbn10 =~ s/-//g;
-                    $isbn13 =~ s/-//g;
-                    push @values, $isbn10;
-                    push @values, $isbn13;
+                    if($isbn) {
+                        my $isbn10 = $isbn->as_isbn10->as_string;
+                        my $isbn13 = $isbn->as_isbn13->as_string;
+                        push @values, $isbn10;
+                        push @values, $isbn13;
+                        $isbn10 =~ s/-//g;
+                        $isbn13 =~ s/-//g;
+                        push @values, $isbn10;
+                        push @values, $isbn13;
+                    } else {
+                        # It's not a valid ISBN but we want to index it anyway
+                        my $value = $sf
+                        push @values, $value;
+                        if($value =~ /-/) {
+                            $value =~ s/-//g;
+                            push @values, $value;
+                        }
+                    }
                 }
             }
         }
