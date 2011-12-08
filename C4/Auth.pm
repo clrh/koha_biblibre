@@ -160,22 +160,6 @@ sub get_template_and_user {
         $template->param( loggedinusername => $user );
         $template->param( sessionID        => $sessionID );
 
-        my ( $total, $pubshelves, $barshelves ) = C4::Context->get_shelves_userenv();
-        if ( defined($pubshelves) ) {
-            $template->param(
-                pubshelves     => scalar(@$pubshelves),
-                pubshelvesloop => $pubshelves,
-            );
-            $template->param( pubtotal => $total->{'pubtotal'}, ) if ( $total->{'pubtotal'} > scalar(@$pubshelves) );
-        }
-        if ( defined($barshelves) ) {
-            $template->param(
-                barshelves     => scalar(@$barshelves),
-                barshelvesloop => $barshelves,
-            );
-            $template->param( bartotal => $total->{'bartotal'}, ) if ( $total->{'bartotal'} > scalar(@$barshelves) );
-        }
-
         $borrowernumber = getborrowernumber($user) if defined($user);
 
         my ($borr) = GetMemberDetails($borrowernumber);
@@ -300,16 +284,9 @@ sub get_template_and_user {
 
         $template->param( sessionID => $sessionID );
 
-        my ( $total, $pubshelves ) = C4::Context->get_shelves_userenv();    # an anonymous user has no 'barshelves'...
-        if ( defined( ($pubshelves) ) ) {
-            $template->param(
-                pubshelves     => scalar(@$pubshelves),
-                pubshelvesloop => $pubshelves,
-            );
-            $template->param( pubtotal => $total->{'pubtotal'}, ) if ( $total->{'pubtotal'} > scalar(@$pubshelves) );
-        }
-
     }
+
+    _set_template_shelves($template, $borrowernumber);
 
     # Anonymous opac search history
     # If opac search history is enabled and at least one search has already been performed
@@ -612,6 +589,41 @@ sub _session_log {
     close L;
 }
 
+sub _set_template_shelves {
+    my ($template, $borrowernumber) = @_;
+
+    my $row_count = 10;    # FIXME This probably should be a syspref
+
+    my ( $total, $totshelves, $barshelves, $pubshelves );
+
+    if(defined $borrowernumber) {
+        # No barshelves for anonymous users
+        ($barshelves, $totshelves) = C4::VirtualShelves::GetRecentShelves(1, undef, $borrowernumber);
+        $total->{'bartotal'} = $totshelves;
+        if(defined($barshelves)) {
+            $template->param(
+                barshelves     => scalar(@$barshelves),
+                barshelvesloop => $barshelves,
+            );
+            if ($total->{'bartotal'} > scalar(@$barshelves)) {
+                $template->param(bartotal => $total->{'bartotal'});
+            }
+        }
+    }
+
+    ($pubshelves, $totshelves) = C4::VirtualShelves::GetRecentShelves(2, $row_count, undef);
+    $total->{'pubtotal'} = $totshelves;
+    if(defined($pubshelves)) {
+        $template->param(
+            pubshelves     => scalar(@$pubshelves),
+            pubshelvesloop => $pubshelves,
+        );
+        if ($total->{'pubtotal'} > scalar(@$pubshelves)) {
+            $template->param(pubtotal => $total->{'pubtotal'});
+        }
+    }
+}
+
 sub checkauth {
     my $query = shift;
     $debug and warn "Checking Auth";
@@ -636,7 +648,7 @@ sub checkauth {
     # state variables
     my $loggedin = 0;
     my %info;
-    my ( $userid, $cookie, $sessionID, $flags, $barshelves, $pubshelves );
+    my ( $userid, $cookie, $sessionID, $flags );
     my $logout = $query->param('logout.x');
 
     # This parameter is the name of the CAS server we want to authenticate against,
@@ -662,9 +674,6 @@ sub checkauth {
                 $session->param('surname'),      $session->param('branch'), $session->param('branchname'), $session->param('flags'),
                 $session->param('emailaddress'), $session->param('branchprinter')
             );
-            C4::Context::set_shelves_userenv( 'bar', $session->param('barshelves') );
-            C4::Context::set_shelves_userenv( 'pub', $session->param('pubshelves') );
-            C4::Context::set_shelves_userenv( 'tot', $session->param('totshelves') );
             $debug and printf STDERR "AUTH_SESSION: (%s)\t%s %s - %s\n", map { $session->param($_) } qw(cardnumber firstname surname branch);
             $ip          = $session->param('ip');
             $lasttime    = $session->param('lasttime');
@@ -860,22 +869,6 @@ sub checkauth {
                     $session->param('emailaddress'), $session->param('branchprinter')
                 );
 
-                # Grab borrower's shelves and public shelves and add them to the session
-                # $row_count determines how many records are returned from the db query
-                # and the number of lists to be displayed of each type in the 'Lists' button drop down
-                my $row_count = 10;    # FIXME:This probably should be a syspref
-                my ( $total, $totshelves, $barshelves, $pubshelves );
-                ( $barshelves, $totshelves ) = C4::VirtualShelves::GetRecentShelves( 1, undef, $borrowernumber );
-                $total->{'bartotal'} = $totshelves;
-                ( $pubshelves, $totshelves ) = C4::VirtualShelves::GetRecentShelves( 2, $row_count, undef );
-                $total->{'pubtotal'} = $totshelves;
-                $session->param( 'barshelves', $barshelves->[0] );
-                $session->param( 'pubshelves', $pubshelves->[0] );
-                $session->param( 'totshelves', $total );
-
-                C4::Context::set_shelves_userenv( 'bar', $barshelves->[0] );
-                C4::Context::set_shelves_userenv( 'pub', $pubshelves->[0] );
-                C4::Context::set_shelves_userenv( 'tot', $total );
             } else {
                 if ($userid) {
                     $info{'invalid_username_or_password'} = 1;
@@ -888,16 +881,6 @@ sub checkauth {
             # if we are here this is an anonymous session; add public lists to it and a few other items...
             # anonymous sessions are created only for the OPAC
             $debug and warn "Initiating an anonymous session...";
-
-            # Grab the public shelves and add to the session...
-            my $row_count = 20;    # FIXME:This probably should be a syspref
-            my ( $total, $totshelves, $pubshelves );
-            ( $pubshelves, $totshelves ) = C4::VirtualShelves::GetRecentShelves( 2, $row_count, undef );
-            $total->{'pubtotal'} = $totshelves;
-            $session->param( 'pubshelves', $pubshelves->[0] );
-            $session->param( 'totshelves', $total );
-            C4::Context::set_shelves_userenv( 'pub', $pubshelves->[0] );
-            C4::Context::set_shelves_userenv( 'tot', $total );
 
             # setting a couple of other session vars...
             $session->param( 'ip',          $session->remote_addr() );
@@ -942,14 +925,7 @@ sub checkauth {
     my $template = gettemplate( $template_name, $type, $query );
     $template->param( branchloop => \@branch_loop, );
 
-    my ( $total, $pubshelves ) = C4::Context->get_shelves_userenv();    # an anonymous user has no 'barshelves'...
-    if ( defined( ($pubshelves) ) ) {
-        $template->param(
-            pubshelves     => scalar(@$pubshelves),
-            pubshelvesloop => $pubshelves,
-        );
-        $template->param( pubtotal => $total->{'pubtotal'}, ) if ( $total->{'pubtotal'} > scalar(@$pubshelves) );
-    }
+    _set_template_shelves($template);
 
     $template->param(
         login                   => 1,

@@ -42,6 +42,7 @@ use Storable qw(thaw freeze);
 use Data::Pagination;
 use C4::XSLT;
 use C4::Charset;
+use C4::VirtualShelves qw/GetRecentShelves/;
 use 5.10.0;
 
 
@@ -556,20 +557,16 @@ $template->param(
 
 # VI. BUILD THE TEMPLATE
 # Build drop-down list for 'Add To:' menu...
-my $session = get_session( $cgi->cookie("CGISESSID") );
-my @addpubshelves;
-my $pubshelves = $session->param('pubshelves');
-my $barshelves = $session->param('barshelves');
-foreach my $shelf (@$pubshelves) {
-    next if ( ( $shelf->{'owner'} != ( $borrowernumber ? $borrowernumber : -1 ) ) && ( $shelf->{'category'} < 3 ) );
-    push( @addpubshelves, $shelf );
+my $count = 10;
+my ($pubshelves) = GetRecentShelves(2, $count, $borrowernumber);
+my ($openshelves) = GetRecentShelves(3, $count, undef); # Also get 'open' shelves
+push @$pubshelves, @{ $openshelves };
+if ($pubshelves) {
+    $template->param( addpubshelves     => scalar(@$pubshelves) );
+    $template->param( addpubshelvesloop => $pubshelves );
 }
 
-if (@addpubshelves) {
-    $template->param( addpubshelves     => scalar(@addpubshelves) );
-    $template->param( addpubshelvesloop => \@addpubshelves );
-}
-
+my ($barshelves) = GetRecentShelves(1, undef, $borrowernumber);
 if ( defined $barshelves ) {
     $template->param( addbarshelves     => scalar(@$barshelves) );
     $template->param( addbarshelvesloop => $barshelves );
