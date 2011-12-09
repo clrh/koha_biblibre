@@ -17,8 +17,7 @@ package C4::Search::Plugins::Authorities;
 # with Koha; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-use strict;
-use warnings;
+use Modern::Perl;
 use C4::AuthoritiesMarc;
 use base 'Exporter';
 
@@ -54,11 +53,13 @@ sub ComputeValue {
                 my $arecord = C4::AuthoritiesMarc::GetAuthority( $bsubfield );
 
                 next unless $arecord;
-                #for each 4.. and 7.. (wich contains vedette, rejected and parralleles forms) of the authority return all subfields
+                #for each 4.. and 7.. (wich contains vedette, rejected and parralleles forms) of the authority return all non numeric subfields
                 for my $afieldtoindex ( @afieldstoindex ) {
                     for my $afield ( $arecord->field( $afieldtoindex ) ) {
                         my @asubfields = $afield->subfields;
-                        push @values, $_->[1] for @asubfields;
+                        for ( @asubfields ) {
+                            push @values, $_->[1] if not $_->[0] =~ /\d/;
+                        }
                     }
                 }
             }
