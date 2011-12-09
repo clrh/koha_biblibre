@@ -39,6 +39,7 @@
                                  * of the first subfield of this authority */
                                 subfield.value = "<!-- TMPL_VAR ESCAPE="JS" NAME="value" -->";
                             <!-- TMPL_ELSE -->
+                                var subfield = subfields[i+1];
                                 var div = $(subfield).parent('div');
                                 /* And clone the subfield for the others values */
                                 /* if field is repeatable */
