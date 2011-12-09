@@ -987,33 +987,72 @@ sub GetMarcStructure {
         return $marc_structure_cache->{$forlibrarian}->{$frameworkcode};
     }
 
-    my $lib = ( $forlibrarian ? 'liblibrarian' : 'IFNULL(libopac,liblibrarian)' );
-
-    my $restags = $dbh->selectall_hashref(
-        qq{SELECT frameworkcode,tagfield,$lib as lib,mandatory,repeatable 
+    #     my $sth = $dbh->prepare(
+    #         "SELECT COUNT(*) FROM marc_tag_structure WHERE frameworkcode=?");
+    #     $sth->execute($frameworkcode);
+    #     my ($total) = $sth->fetchrow;
+    #     $frameworkcode = "" unless ( $total > 0 );
+    my $sth = $dbh->prepare(
+        "SELECT tagfield,liblibrarian,libopac,mandatory,repeatable 
         FROM marc_tag_structure 
-        ORDER BY frameworkcode,tagfield},
-        [ "frameworkcode", "tagfield" ],
+        WHERE frameworkcode=? 
+        ORDER BY tagfield"
     );
+    $sth->execute($frameworkcode);
+    my ( $liblibrarian, $libopac, $tag, $res, $tab, $mandatory, $repeatable );
 
-    my $ressubfields = $dbh->selectall_hashref(
-"SELECT frameworkcode,tagfield,tagsubfield,$lib as lib,tab,mandatory,repeatable,authorised_value,authtypecode,value_builder,kohafield,seealso,hidden,isurl,link,defaultvalue 
-         FROM   marc_subfield_structure 
-         ORDER BY frameworkcode,tagfield,tagsubfield",
-        [ "frameworkcode", "tagfield", "tagsubfield" ],
-    );
-    my $res;
-    foreach my $fwkcode ( keys %$restags ) {
-        foreach my $tag ( keys %{ $restags->{$fwkcode} } ) {
-            %{ $res->{$fwkcode}->{$tag} } = %{ $ressubfields->{$fwkcode}->{$tag} } if ( $ressubfields->{$fwkcode}->{$tag} );
-            foreach my $key ( keys %{ $restags->{$fwkcode}->{$tag} } ) {
-                $res->{$fwkcode}->{$tag}->{$key} = $restags->{$fwkcode}->{$tag}->{$key};
-            }
-        }
+    while ( ( $tag, $liblibrarian, $libopac, $mandatory, $repeatable ) = $sth->fetchrow ) {
+        $res->{$tag}->{lib}        = ( $forlibrarian or !$libopac ) ? $liblibrarian : $libopac;
+        $res->{$tag}->{tab}        = "";
+        $res->{$tag}->{mandatory}  = $mandatory;
+        $res->{$tag}->{repeatable} = $repeatable;
     }
-    $marc_structure_cache->{$forlibrarian} = $res;
 
-    return $res->{$frameworkcode};
+    $sth = $dbh->prepare(
+        "SELECT tagfield,tagsubfield,liblibrarian,libopac,tab,mandatory,repeatable,authorised_value,authtypecode,value_builder,kohafield,seealso,hidden,isurl,link,defaultvalue 
+         FROM   marc_subfield_structure 
+         WHERE  frameworkcode=? 
+         ORDER BY tagfield,tagsubfield
+        "
+    );
+
+    $sth->execute($frameworkcode);
+
+    my $subfield;
+    my $authorised_value;
+    my $authtypecode;
+    my $value_builder;
+    my $kohafield;
+    my $seealso;
+    my $hidden;
+    my $isurl;
+    my $link;
+    my $defaultvalue;
+
+    while (
+        (   $tag,          $subfield,      $liblibrarian, $libopac, $tab,    $mandatory, $repeatable, $authorised_value,
+            $authtypecode, $value_builder, $kohafield,    $seealso, $hidden, $isurl,     $link,       $defaultvalue
+        )
+        = $sth->fetchrow
+      ) {
+        $res->{$tag}->{$subfield}->{lib}              = ( $forlibrarian or !$libopac ) ? $liblibrarian : $libopac;
+        $res->{$tag}->{$subfield}->{tab}              = $tab;
+        $res->{$tag}->{$subfield}->{mandatory}        = $mandatory;
+        $res->{$tag}->{$subfield}->{repeatable}       = $repeatable;
+        $res->{$tag}->{$subfield}->{authorised_value} = $authorised_value;
+        $res->{$tag}->{$subfield}->{authtypecode}     = $authtypecode;
+        $res->{$tag}->{$subfield}->{value_builder}    = $value_builder;
+        $res->{$tag}->{$subfield}->{kohafield}        = $kohafield;
+        $res->{$tag}->{$subfield}->{seealso}          = $seealso;
+        $res->{$tag}->{$subfield}->{hidden}           = $hidden;
+        $res->{$tag}->{$subfield}->{isurl}            = $isurl;
+        $res->{$tag}->{$subfield}->{'link'}           = $link;
+        $res->{$tag}->{$subfield}->{defaultvalue}     = $defaultvalue;
+    }
+
+    $marc_structure_cache->{$forlibrarian}->{$frameworkcode} = $res;
+
+    return $res;
 }
 
 =head2 GetUsedMarcStructure
