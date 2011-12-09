@@ -46,7 +46,7 @@ sub ComputeValue {
                         push @values, $isbn13;
                     } else {
                         # It's not a valid ISBN but we want to index it anyway
-                        my $value = $sf
+                        my $value = $sf;
                         push @values, $value;
                         if($value =~ /-/) {
                             $value =~ s/-//g;
