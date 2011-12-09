@@ -116,7 +116,7 @@ foreach my $num (@getreserves) {
     my $getborrower  = GetMemberDetails( $num->{'borrowernumber'} );
     my $itemtypeinfo = getitemtypeinfo( $gettitle->{'itemtype'} );     # using the fixed up itype/itemtype
     if ( $num->{waitingdate} ) {
-        my @maxpickupdate = GetMaxPickupDate( $num->{'waitingdate'}, $borrowernumber, $num );
+        my @maxpickupdate = GetMaxPickupDate( $num->{'waitingdate'}, $num->{borrowernumber}, $num );
         $getreserv{'waitingdate'} = format_date( $num->{'waitingdate'} );
 
         $getreserv{'maxpickupdate'} = sprintf( "%d-%02d-%02d", @maxpickupdate );
