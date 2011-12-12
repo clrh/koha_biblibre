@@ -119,7 +119,7 @@ sub FindDuplicate {
 
     $query = C4::Search::Query->normalSearch($query);
     my $res = SimpleSearch($query);
-    return unless $res;
+    return if $res->{error};
     my @results;
     for ( @{ $res->items } ) {
         my $result = GetBiblio( $_->{'values'}->{'recordid'} );
