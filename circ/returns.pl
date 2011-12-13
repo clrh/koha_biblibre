@@ -47,7 +47,7 @@ use C4::Members;
 use C4::Overdues qw/CheckBorrowerDebarred/;
 use C4::Branch;    # GetBranches GetBranchName
 use C4::Koha;      # FIXME : is it still useful ?
-use C4::RotatingCollections;
+#use C4::RotatingCollections;
 use C4::Debug;
 
 my $query      = new CGI;
@@ -619,16 +619,17 @@ $template->param(
     soundon        => C4::Context->preference("SoundOn"),
 );
 
-my $itemnumber = GetItemnumberFromBarcode( $query->param('barcode') );
-if ($itemnumber) {
-    my ( $holdingBranch, $collectionBranch ) = GetCollectionItemBranches($itemnumber);
-    if ( !( $holdingBranch eq $collectionBranch ) ) {
-        $template->param(
-            collectionItemNeedsTransferred => 1,
-            collectionBranch               => GetBranchName($collectionBranch),
-        );
-    }
-}
+# RotatingCollection is not usable
+#my $itemnumber = GetItemnumberFromBarcode( $query->param('barcode') );
+#if ($itemnumber) {
+#    my ( $holdingBranch, $collectionBranch ) = GetCollectionItemBranches($itemnumber);
+#    if ( !( $holdingBranch eq $collectionBranch ) ) {
+#        $template->param(
+#            collectionItemNeedsTransferred => 1,
+#            collectionBranch               => GetBranchName($collectionBranch),
+#        );
+#    }
+#}
 
 # actually print the page!
 output_html_with_http_headers $query, $cookie, $template->output;
