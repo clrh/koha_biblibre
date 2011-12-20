@@ -80,16 +80,21 @@ function AreMandatoriesNotOk(){
     var tab = new Array();
     var label = new Array();
     var flag=0;
-    var tabflag= new Array();  
+    var tabflag= new Array();
     <!-- TMPL_LOOP NAME='BIG_LOOP' -->
-    	<!-- TMPL_LOOP NAME='innerloop' -->
-	        <!-- TMPL_IF NAME="mandatory" -->
-    	    	mandatoriesfields.push(new Array("<!-- TMPL_VAR NAME="tag" -->","<!-- TMPL_VAR NAME="index" --><!-- TMPL_VAR NAME="random" -->","<!-- TMPL_VAR NAME="index" -->"));
-        	<!-- /TMPL_IF -->
-    		<!-- TMPL_LOOP NAME='subfield_loop'-->
-    			<!-- TMPL_IF NAME='mandatory'-->mandatories.push("<!-- TMPL_VAR NAME='id' -->");
-                   	tab.push("<!-- TMPL_VAR NAME='number' -->");
-                   	label.push("<!-- TMPL_VAR NAME='marc_lib' -->");
+        <!-- TMPL_LOOP NAME='innerloop' -->
+            <!-- TMPL_IF NAME="mandatory" -->
+                if($("#tag_<!-- TMPL_VAR NAME='tag' -->_<!--TMPL_VAR NAME='index' --><!-- TMPL_VAR NAME='random' -->").length > 0) {
+                    mandatoriesfields.push(new Array("<!-- TMPL_VAR NAME="tag" -->","<!-- TMPL_VAR NAME="index" --><!-- TMPL_VAR NAME="random" -->","<!-- TMPL_VAR NAME="index" -->"));
+                }
+            <!-- /TMPL_IF -->
+            <!-- TMPL_LOOP NAME='subfield_loop'-->
+                <!-- TMPL_IF NAME='mandatory'-->
+                    if($("#<!-- TMPL_VAR NAME='id' -->").length > 0) {
+                        mandatories.push("<!-- TMPL_VAR NAME='id' -->");
+                        tab.push("<!-- TMPL_VAR NAME='number' -->");
+                        label.push("<!-- TMPL_VAR NAME='marc_lib' -->");
+                    }
                 <!-- /TMPL_IF -->
             <!-- /TMPL_LOOP -->
         <!-- /TMPL_LOOP -->
@@ -164,10 +169,10 @@ function AreMandatoriesNotOk(){
     }
 
     if(flag){
-	    return StrAlert;
-	} else {
-		return flag;
-	}
+        return StrAlert;
+    } else {
+        return flag;
+    }
 }
 
 /** 
