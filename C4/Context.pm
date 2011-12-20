@@ -498,7 +498,7 @@ sub preference {
     my $var  = shift;    # The system preference to return
 
     $var=lc($var);
-    if ( defined $context->{'sysprefs'} ) {
+    if ( defined $context->{'sysprefs'}->{$var} ) {
         return $context->{'sysprefs'}->{$var};
     }
 
