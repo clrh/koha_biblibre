@@ -470,20 +470,29 @@ sub _default_unimarc_charconv_to_utf8 {
     my $marc_record  = shift;
     my $marc_flavour = shift;
 
-    my $trial_marc8 = $marc_record->clone();
+    my $encoding = '';
+    if($marc_flavour and $marc_flavour =~ /UNIMARC/ and $marc_record) {
+        $encoding = substr($marc_record->subfield('100', 'a'), 26, 4);
+    }
+    my @errors;
     my @all_errors  = ();
-    my @errors      = _marc_iso5426_to_utf8( $trial_marc8, $marc_flavour );
-    unless (@errors) {
-        return $trial_marc8, 'iso-5426';
+    if(not $encoding or $encoding =~ /^03/) {
+        my $trial_marc8 = $marc_record->clone();
+        @errors      = _marc_iso5426_to_utf8( $trial_marc8, $marc_flavour );
+        unless (@errors) {
+            return $trial_marc8, 'iso-5426';
+        }
+        push @all_errors, @errors;
     }
-    push @all_errors, @errors;
 
-    my $trial_8859_1 = $marc_record->clone();
-    @errors = _marc_to_utf8_via_text_iconv( $trial_8859_1, $marc_flavour, 'iso-8859-1' );
-    unless (@errors) {
-        return $trial_8859_1, 'iso-8859-1';
+    if(not $encoding or $encoding =~ /^01/) {
+        my $trial_8859_1 = $marc_record->clone();
+        @errors = _marc_to_utf8_via_text_iconv( $trial_8859_1, $marc_flavour, 'iso-8859-1' );
+        unless (@errors) {
+            return $trial_8859_1, 'iso-8859-1';
+        }
+        push @all_errors, @errors;
     }
-    push @all_errors, @errors;
 
     my $default_converted = $marc_record->clone();
     _marc_to_utf8_replacement_char( $default_converted, $marc_flavour );

@@ -298,12 +298,19 @@ sub BatchStageMarcRecords {
         if ( scalar( $marc_record->fields() ) == 0 ) {
             push @invalid_records, $marc_blob;
         } else {
-            $num_valid++;
-            $import_record_id = AddBiblioToBatch( $batch_id, $rec_num, $marc_record, $marc_flavor, int( rand(99999) ), 0 );
+            eval {
+                $import_record_id = AddBiblioToBatch( $batch_id, $rec_num, $marc_record, $marc_flavor, int( rand(99999) ), 0 );
+            };
+            if($@) {
+                warn "Problem in AddBiblioToBatch for record no. $rec_num: $@";
+                push @invalid_records, $marc_blob;
+                next;
+            }
             if ($parse_items) {
                 my @import_items_ids = AddItemsToImportBiblio( $batch_id, $import_record_id, $marc_record, 0 );
                 $num_items += scalar(@import_items_ids);
             }
+            $num_valid++;
         }
     }
     unless ($leave_as_staging) {
