@@ -389,11 +389,14 @@ sub SimpleSearch {
         warn $err;
 
         $err =~ s#^[^\n]*\n##; # Delete first line
-        if ( not $err =~ 'Connection refused' ) {
+        if ( $err =~ "400 URL must be absolute" ) {
+            $err = "Your system preference 'SolrAPI' is not set correctly";
+        }
+        elsif ( not $err =~ 'Connection refused' ) {
             my $document = XMLin( $err );
             $err = "$$document{body}{h2} : $$document{body}{pre}";
         }
-       $$result{error} = $err;
+        $$result{error} = $err;
     }
 
     return $result; # if (ref($result) eq "Data::SearchEngine::Solr::Results");
