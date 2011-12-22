@@ -135,27 +135,6 @@ for my $rule (@issuingrules) {
             $rule->{"herited_$_"} = 1;
         }
     }
-}
-
-# Get the issuing rules list...
-my @issuingrules = GetIssuingRulesByBranchCode($branchcode);
-
-# ...and refine its data, row by row.
-for my $rule (@issuingrules) {
-    $rule->{'humanitemtype'} ||= $rule->{'itemtype'};
-    $rule->{'default_humanitemtype'} = $rule->{'humanitemtype'} eq '*';
-    $rule->{'humancategorycode'} ||= $rule->{'categorycode'};
-    $rule->{'default_humancategorycode'} = $rule->{'humancategorycode'} eq '*';
-
-    # This block is to show herited values in grey.
-    # We juste compare keys from our raw rule, with keys from the computed rule.
-    my $computedrule = GetIssuingRule( $rule->{'categorycode'}, $rule->{'itemtype'}, $rule->{'branchcode'} );
-    for ( keys %$rule ) {
-        if ( not defined $rule->{$_} ) {
-            $rule->{$_} = $computedrule->{$_};
-            $rule->{"herited_$_"} = 1;
-        }
-    }
 
     $rule->{'fine'} = sprintf( '%.2f', $rule->{'fine'} );
 }
