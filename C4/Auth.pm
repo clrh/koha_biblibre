@@ -247,27 +247,6 @@ sub get_template_and_user {
                 # We show the link in opac
                 $template->param( ShowOpacRecentSearchLink => 1 );
             }
-
-            # And if there's a cookie with searches performed when the user was not logged in,
-            # we add them to the logged-in search history
-            my $searchcookie = $in->{'query'}->cookie('KohaOpacRecentSearches');
-            if ($searchcookie) {
-                $searchcookie = uri_unescape($searchcookie);
-                my @recentSearches = @{ thaw($searchcookie) || [] };
-                if (@recentSearches) {
-                    my $sth = $dbh->prepare($SEARCH_HISTORY_INSERT_SQL);
-                    $sth->execute( $borrowernumber, $in->{'query'}->cookie("CGISESSID"), $_->{'query_desc'}, $_->{'query_cgi'}, $_->{'limit_desc'}, $_->{'limit_cgi'}, $_->{'total'}, $_->{'time'}, )
-                      foreach @recentSearches;
-
-                    # And then, delete the cookie's content
-                    my $newsearchcookie = $in->{'query'}->cookie(
-                        -name    => 'KohaOpacRecentSearches',
-                        -value   => freeze( [] ),
-                        -expires => ''
-                    );
-                    $cookie = [ $cookie, $newsearchcookie ];
-                }
-            }
         }
     } else {    # if this is an anonymous session, setup to display public lists...
 
