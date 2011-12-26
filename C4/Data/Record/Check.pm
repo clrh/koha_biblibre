@@ -88,21 +88,45 @@ AND (authtypecode IS NOT NULL AND authtypecode<>\"\")|
                 $authtype_index => $data->{authtypecode},
             };
             my $name_index = C4::Search::Query::getIndexName('auth-heading');
-            for ( $field->subfields ) { $query .= qq{ AND $name_index:"$_->[1]"} if $_->[0] =~ /[A-z]/ };
-            my $res = SimpleSearch( $query, $filters );
+            for ( $field->subfields ) {
+                $query .= qq{ AND $name_index:"$_->[1]" } if $_->[0] =~ /[A-z]/;
+            }
+            my $res = SimpleSearch( $query, $filters, { page => 1, count => 1 } );
             my $hits = $$res{'pager'}{'total_entries'};
-            if ( !$$res{error} and $hits == 1 ) {
-                my $item = @{ $res->items }[0];
-                $field->add_subfields( '9' => $item->{'values'}->{'recordid'} );
-                $countlinked++;
-            } elsif ( $res and $hits > 1 ) {
-                #More than One result
-                #This can comes out of a lack of a subfield.
-                #         my $marcrecord = MARC::File::USMARC::decode($results->[0]);
-                #         $record->field($data->{tagfield})->add_subfields('9'=>$marcrecord->field('001')->data);
-                $countlinked++;
-            } else {
-                #There are no results, build authority record, add it to Authorities, get authid and add it to 9
+            my $duplicate_found = 0;
+            if ( !$$res{error} and $hits > 0 ) {
+                foreach my $item (@{ $res->items }) {
+                    my $authid = $item->{values}->{recordid};
+                    my $authority = GetAuthority($authid);
+                    next unless $authority;
+                    my $authtypecode = GetAuthTypeCode($authid);
+                    my $authtype = GetAuthType($authtypecode);
+                    next unless $authtype;
+                    my $authfield = $authority->field($authtype->{auth_tag_to_report});
+                    next unless $authfield;
+                    my $is_duplicate = 1;
+                    foreach my $subfieldtag ( qw(a b c d e f g h i t x y z) ) {
+                        my $cmp = compare_arrays(
+                            [ trim $field->subfields($subfieldtag) ],
+                            [ trim $authfield->subfields($subfieldtag) ]
+                        );
+                        if($cmp != 0) {
+                            $is_duplicate = 0;
+                            last;
+                        }
+                    }
+                    if($is_duplicate) {
+                        $field->add_subfields( '9' => $authid );
+                        $countlinked++;
+                        $duplicate_found = 1;
+                        last;
+                    }
+                }
+            }
+
+            unless($duplicate_found) {
+                # There are no results, or no duplicate was found,
+                # build authority record, add it to Authorities, get authid and add it to 9
                 ###NOTICE : This is only valid if a subfield is linked to one and only one authtypecode
                 ###NOTICE : This can be a problem. We should also look into other types and rejected forms.
                 my $authtypedata = GetAuthType( $data->{authtypecode} );
@@ -140,6 +164,35 @@ AND (authtypecode IS NOT NULL AND authtypecode<>\"\")|
         }
     }
     return ( $countlinked, $countcreated );
+}
+
+
+# trims the spaces before and after a string
+# and normalize the number of spaces inside
+sub trim{
+    map {
+       my $value = $_;
+       $value =~ s/\s+$//g;
+       $value =~ s/^\s+//g;
+       $value =~ s/\s+/ /g;
+       $value;
+    } @_;
+}
+
+sub compare_arrays{
+    my ($arrayref1, $arrayref2) = @_;
+
+    if (scalar(@$arrayref1) != scalar(@$arrayref2)) {
+        return scalar(@$arrayref1) - scalar(@$arrayref2);
+    }
+
+    my $compare = 0;
+    for (my $i=0; $i<scalar(@$arrayref1); $i++){
+        $compare = $arrayref1->[$i] cmp $arrayref2->[$i];
+        last if $compare;
+    }
+
+    return $compare;
 }
 
 1;
