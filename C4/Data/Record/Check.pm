@@ -91,7 +91,7 @@ AND (authtypecode IS NOT NULL AND authtypecode<>\"\")|
             for ( $field->subfields ) {
                 $query .= qq{ AND $name_index:"$_->[1]" } if $_->[0] =~ /[A-z]/;
             }
-            my $res = SimpleSearch( $query, $filters, { page => 1, count => 1 } );
+            my $res = SimpleSearch( $query, $filters );
             my $hits = $$res{'pager'}{'total_entries'};
             my $duplicate_found = 0;
             if ( !$$res{error} and $hits > 0 ) {
