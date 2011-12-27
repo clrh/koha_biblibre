@@ -707,7 +707,11 @@ sub get_matches {
         my $query = join( " or ", map { "$matchpoint->{'index'}=$_" } @source_keys );
 
         $query = C4::Search::Query->normalSearch($query);
-        my $results = C4::Search::SimpleSearch($query, {}, 1, $max_matches);
+        my $params = {
+            page => 1,
+            count => $max_matches,
+        };
+        my $results = C4::Search::SimpleSearch($query, {}, $params);
 
         foreach my $matched (@{$results->items}) {
             $matches{$matched->{values}{recordid}} += $matchpoint->{'score'};
