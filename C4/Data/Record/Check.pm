@@ -63,7 +63,7 @@ sub BiblioAddAuthorities {
     my $dbh   = C4::Context->dbh;
     my $query = $dbh->prepare(
         qq|
-SELECT authtypecode,tagfield
+SELECT authtypecode,tagfield,tagsubfield
 FROM marc_subfield_structure 
 WHERE frameworkcode=? 
 AND (authtypecode IS NOT NULL AND authtypecode<>\"\")|
@@ -87,9 +87,13 @@ AND (authtypecode IS NOT NULL AND authtypecode<>\"\")|
                 recordtype   => 'authority',
                 $authtype_index => $data->{authtypecode},
             };
-            my $name_index = C4::Search::Query::getIndexName('auth-heading');
+            my $auth_heading_index_name = C4::Search::Query::getIndexName('auth-heading');
             for ( $field->subfields ) {
-                $query .= qq{ AND $name_index:"$_->[1]" } if $_->[0] =~ /[A-z]/;
+                $query .= qq{ AND $auth_heading_index_name:"$_->[1]" } if $_->[0] =~ /[A-z]/;
+            }
+            my $auth_heading_main_index_name = C4::Search::Query::getIndexName('auth-heading-main');
+            foreach ($field->subfield($data->{tagsubfield})) {
+                $query .= qq{ AND $auth_heading_main_index_name:"$_" };
             }
             my $res = SimpleSearch( $query, $filters );
             my $hits = $$res{'pager'}{'total_entries'};
