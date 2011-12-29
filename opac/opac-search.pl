@@ -489,7 +489,7 @@ if ( @results == 1
         print $cgi->redirect("/cgi-bin/koha/opac-detail.pl?biblionumber=$biblionumber");
     }
     exit;
-} elsif ( @results > 1 ) {
+} elsif ( @results > 1 and %{$res->facets}) {
     # build facets
     my $facets_ordered = C4::Search::Engine::Solr::GetFacetedIndexes("biblio");
     for my $index ( @$facets_ordered ) {
