@@ -1,26 +1,27 @@
 // These default options are for translation but can be used
 // for any other datatables settings
+// MSG_DT_* variables comes from datatables-strings.inc
 // To use it, write:
 //  $("#table_id").dataTable($.extend(true, {}, dataTableDefaults, {
 //      // other settings
 //  } ) );
-var dataTableDefaults = {
+var dataTablesDefaults = {
     "oLanguage": {
         "oPaginate": {
-            "sFirst"    : _("First"),
-            "sLast"     : _("Last"),
-            "sNext"     : _("Next"),
-            "sPrevious" : _("Previous")
+            "sFirst"    : window.MSG_DT_FIRST || "First",
+            "sLast"     : window.MSG_DT_LAST || "Last",
+            "sNext"     : window.MSG_DT_NEXT || "Next",
+            "sPrevious" : window.MSG_DT_PREVIOUS || "Previous"
         },
-        "sEmptyTable"       : _("No data available in table"),
-        "sInfo"             : _("Showing _START_ to _END_ of _TOTAL_ entries"),
-        "sInfoEmpty"        : _("No entries to show"),
-        "sInfoFiltered"     : _("(filtered from _MAX_ total entries"),
-        "sLengthMenu"       : _("Show _MENU_ entries"),
-        "sLoadingRecords"   : _("Loading..."),
-        "sProcessing"       : _("Processing..."),
-        "sSearch"           : _("Search:"),
-        "sZeroRecords"      : _("No matching records found")
+        "sEmptyTable"       : window.MSG_DT_EMPTY_TABLE || "No data available in table",
+        "sInfo"             : window.MSG_DT_INFO || "Showing _START_ to _END_ of _TOTAL_ entries",
+        "sInfoEmpty"        : window.MSG_DT_INFO_EMPTY || "No entries to show",
+        "sInfoFiltered"     : window.MSG_DT_INFO_FILTERED || "(filtered from _MAX_ total entries)",
+        "sLengthMenu"       : window.MSG_DT_LENGTH_MENU || "Show _MENU_ entries",
+        "sLoadingRecords"   : window.MSG_DT_LOADING_RECORDS || "Loading...",
+        "sProcessing"       : window.MSG_DT_PROCESSING || "Processing...",
+        "sSearch"           : window.MSG_DT_SEARCH || "Search:",
+        "sZeroRecords"      : window.MSG_DT_ZERO_RECORDS || "No matching records found"
     }
 };
 
@@ -109,21 +110,20 @@ jQuery.fn.dataTableExt.oApi.fnSetFilteringDelay = function ( oSettings, iDelay )
 }
 
 // Add a filtering delay on general search and on all input (with a class 'filter')
-jQuery.fn.dataTableExt.oApi.fnAddFilteringDelay = function ( oSettings, iDelay ) {
+jQuery.fn.dataTableExt.oApi.fnAddFilters = function ( oSettings, sClass, iDelay ) {
     var table = this;
     this.fnSetFilteringDelay(iDelay);
     var filterTimerId = null;
-    $("input.filter").keyup(function(event) {
-      var $this = this;
+    $("input."+sClass).keyup(function(event) {
       if (blacklist_keys.indexOf(event.keyCode) != -1) {
         return this;
       }else if ( event.keyCode == '13' ) {
-        $.fn.dataTableExt.iApiIndex = i;
-        _that.fnFilter( $(this).val() );
+        table.fnFilter( $(this).val(), $(this).attr('data-column_num') );
       } else {
         window.clearTimeout(filterTimerId);
+        var input = this;
         filterTimerId = window.setTimeout(function() {
-          table.fnFilter($($this).val(), $($this).attr('data-column_num'));
+          table.fnFilter($(input).val(), $(input).attr('data-column_num'));
         }, iDelay);
       }
     });

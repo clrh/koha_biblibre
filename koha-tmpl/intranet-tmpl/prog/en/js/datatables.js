@@ -1,5 +1,6 @@
 // These default options are for translation but can be used
 // for any other datatables settings
+// MSG_DT_* variables comes from datatables-strings.inc
 // To use it, write:
 //  $("#table_id").dataTable($.extend(true, {}, dataTableDefaults, {
 //      // other settings
@@ -7,20 +8,20 @@
 var dataTablesDefaults = {
     "oLanguage": {
         "oPaginate": {
-            "sFirst"    : _("First"),
-            "sLast"     : _("Last"),
-            "sNext"     : _("Next"),
-            "sPrevious" : _("Previous")
+            "sFirst"    : window.MSG_DT_FIRST || "First",
+            "sLast"     : window.MSG_DT_LAST || "Last",
+            "sNext"     : window.MSG_DT_NEXT || "Next",
+            "sPrevious" : window.MSG_DT_PREVIOUS || "Previous"
         },
-        "sEmptyTable"       : _("No data available in table"),
-        "sInfo"             : _("Showing _START_ to _END_ of _TOTAL_ entries"),
-        "sInfoEmpty"        : _("No entries to show"),
-        "sInfoFiltered"     : _("(filtered from _MAX_ total entries)"),
-        "sLengthMenu"       : _("Show _MENU_ entries"),
-        "sLoadingRecords"   : _("Loading..."),
-        "sProcessing"       : _("Processing..."),
-        "sSearch"           : _("Search:"),
-        "sZeroRecords"      : _("No matching records found")
+        "sEmptyTable"       : window.MSG_DT_EMPTY_TABLE || "No data available in table",
+        "sInfo"             : window.MSG_DT_INFO || "Showing _START_ to _END_ of _TOTAL_ entries",
+        "sInfoEmpty"        : window.MSG_DT_INFO_EMPTY || "No entries to show",
+        "sInfoFiltered"     : window.MSG_DT_INFO_FILTERED || "(filtered from _MAX_ total entries)",
+        "sLengthMenu"       : window.MSG_DT_LENGTH_MENU || "Show _MENU_ entries",
+        "sLoadingRecords"   : window.MSG_DT_LOADING_RECORDS || "Loading...",
+        "sProcessing"       : window.MSG_DT_PROCESSING || "Processing...",
+        "sSearch"           : window.MSG_DT_SEARCH || "Search:",
+        "sZeroRecords"      : window.MSG_DT_ZERO_RECORDS || "No matching records found"
     }
 };
 
