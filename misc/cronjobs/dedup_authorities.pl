@@ -77,7 +77,7 @@ for my $authtypecode (@authtypecodes) {
         for my $attempt (@attempts) {
             my $query = _build_query( $authrecord, $attempt );
             $debug and warn _build_query( $authrecord, $attempt );
-            next unless $query =~ /(he|ppn)=/;
+            next unless $query =~ /(he|he-main|ppn)(,\S*)*(=|:)/;
             my $stringquery = eval {
                 C4::Search::Query->normalSearch($query);
             };
@@ -262,7 +262,7 @@ sub _is_duplicate {
             $authrecord->field($auth_tag2)->as_string;
         return 0;
     }
-    for my $subfield qw(a b c d e f g i h x y z t) {
+    for my $subfield (qw(a b c d e f g i h x y z t)) {
         $debug && warn "Compare subfield $subfield";
         if (compare_arrays(
                 [ trim( $marc->subfield( $auth_tag, $subfield ) ) ],
@@ -298,6 +298,14 @@ Parameters:
                             tagsubfield can be 123a or 123abc or 123
 
                             If multiple match parameters are sent, then it will try to match in the order it is provided to the script.
+
+                            Examples:
+                                at/152b##he-main/2..a##he/2..bxyzt##ppn/009
+                                authtype/152b##he-main,ext/2..a##he,ext/2..bxyz
+                                sn,ne,st-numeric/001##authtype/152b##he-main,ext/2..a##he,ext/2..bxyz
+
+                            Match strings MUST contains at least one of the
+                            following indexes: he, he-main, ppn and auth-ppn
 
     --where sqlstring       limit the deduplication to SOME authorities only
     --verbose               display logs
