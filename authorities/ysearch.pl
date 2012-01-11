@@ -76,15 +76,15 @@ push @$indexes, $index for @values;
 push @$operands, $_ for @values;
 push @$operators, 'AND' for @values;
 
+my $summary_index_name = C4::Search::Query::getIndexName('auth-summary');
 my $authtype_indexname = C4::Search::Query::getIndexName('auth-type');
 my $filters = {
     recordtype => 'authority',
     $authtype_indexname => $authtypecode
 };
 my $q = C4::Search::Query->buildQuery( $indexes, $operands, $operators );
-my $results = SimpleSearch( $q, $filters, $page, $count, $orderby );
+my $results = SimpleSearch( $q, $filters, { page => $page, count => $count, sort => $orderby, fl => [$summary_index_name] } );
 
-my $summary_index_name = C4::Search::Query::getIndexName('auth-summary');
 map {
     my $record = GetAuthority( $_->{'values'}->{'recordid'} );
     my $summary = $_->{'values'}->{$summary_index_name};

@@ -362,7 +362,7 @@ if ( $limit_yr ) {
 
 my $q = C4::Search::Query->buildQuery(\@indexes, \@operands, \@operators);
 
-my $res = SimpleSearch( $q, \%filters, $page, $count, $sort_by);
+my $res = SimpleSearch( $q, \%filters, { page => $page, count => $count, sort => $sort_by, facets => 1 } );
 C4::Context->preference("DebugLevel") eq '2' && warn "ProSolrSimpleSearch:q=$q:";
 
 if ($$res{error}){
@@ -427,22 +427,24 @@ for my $index ( @$facets_ordered ) {
         my @values;
         $index =~ m/^([^_]*)_(.*)$/;
         my ($type, $code) = ($1, $2);
+        my $avlist=C4::Search::Engine::Solr::GetAvlistFromCode($code);
         for ( my $i = 0 ; $i < scalar(@$facet) ; $i++ ) {
             my $value = $facet->[$i++];
             my $count = $facet->[$i];
             utf8::encode($value);
             my $lib;
-            if ( $code =~/branch/ ) {
-                $lib = GetBranchName $value;
-            }
-            if ( $code =~/itype/ or $code =~ /ccode/ ) {
-                $lib = GetSupportName $value;
-            }
-            if ( $code =~ /pubdate/ ) {
-                $lib = C4::Dates->new($value, 'iso')->output('iso');
-            }
-            if ( my $avlist=C4::Search::Engine::Solr::GetAvlistFromCode($code) ) {
-                $lib = GetAuthorisedValueLib $avlist,$value;
+            if ( $avlist ) {
+                $lib = GetAuthorisedValueLib $avlist, $value;
+            } else {
+                if ( $code =~/branch/ ) {
+                    $lib = GetBranchName $value;
+                }
+                if ( $code =~/itype/ or $code =~ /ccode/ ) {
+                    $lib = GetSupportName $value;
+                }
+                if ( $code =~ /pubdate/ ) {
+                    $lib = C4::Dates->new($value, 'iso')->output('iso');
+                }
             }
             $lib ||=$value;
             push @values, {

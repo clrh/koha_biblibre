@@ -87,7 +87,7 @@ if ( $op eq "do_search" ) {
 
     my $offset = $startfrom > 1 ? $startfrom - 1 : 0;
     my $query = C4::Search::Query->normalSearch($ccl_query);
-    $marcresults = SimpleSearch( $query, {}, $offset / $resultsperpage + 1, $resultsperpage );
+    $marcresults = SimpleSearch( $query, {}, { page => $offset / $resultsperpage + 1, count => $resultsperpage } );
     $total_hits = $marcresults->{'pager'}->{'total_entries'};
 
     if ( scalar($marcresults->items) > 0 ) {

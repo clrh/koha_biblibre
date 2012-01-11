@@ -327,7 +327,7 @@ function GetZ3950Terms(){
                             </p>
                             <!-- TMPL_IF name="summary" -->
                                 <!-- TMPL_IF NAME="author" -->
-                                    <a href="/cgi-bin/koha/catalogue/search.pl?q=*:*&amp;filters=<!-- TMPL_VAR NAME="author_indexname" -->:&quot;<!-- TMPL_VAR NAME="author" ESCAPE="URL" -->&quot;" title="Search for this Author"><!-- TMPL_VAR NAME="author" --></a>
+                                    <a href="/cgi-bin/koha/catalogue/search.pl?q=<!-- TMPL_VAR NAME="author_indexname" -->:&quot;<!-- TMPL_VAR NAME="author" ESCAPE="URL" -->&quot;" title="Search for this Author"><!-- TMPL_VAR NAME="author" --></a>
                                 <!-- TMPL_ELSE -->
                                     &nbsp;
                                 <!-- /TMPL_IF -->
@@ -351,7 +351,7 @@ function GetZ3950Terms(){
                                         <!-- /TMPL_UNLESS -->
                                     <!-- /TMPL_UNLESS -->
                                     <!-- TMPL_IF NAME="author" -->
-                                        <a href="/cgi-bin/koha/catalogue/search.pl?q=*:*&amp;filters=<!-- TMPL_VAR NAME="author_indexname" -->:&quot;<!-- TMPL_VAR NAME="author" ESCAPE="URL" -->&quot;" title="Search for this Author"><!-- TMPL_VAR NAME="author" --></a>
+                                        <a href="/cgi-bin/koha/catalogue/search.pl?q=<!-- TMPL_VAR NAME="author_indexname" -->:&quot;<!-- TMPL_VAR NAME="author" ESCAPE="URL" -->&quot;" title="Search for this Author"><!-- TMPL_VAR NAME="author" --></a>
                                     <!-- TMPL_ELSE -->
                                         &nbsp;
                                     <!-- /TMPL_IF -->

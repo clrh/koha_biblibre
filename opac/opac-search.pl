@@ -352,7 +352,7 @@ my $q_mod = $end_query
 $query_desc = $q if not $tag;
 
 # perform the search
-my $res = SimpleSearch( $q_mod, \%filters, $page, $count, $sort_by);
+my $res = SimpleSearch( $q_mod, \%filters, { page => $page, count => $count, sort => $sort_by, facets => $format =~ /rss|atom/ ? 0 : 1 } );
 C4::Context->preference("DebugLevel") eq '2' && warn "OpacSolrSimpleSearch:q=$q_mod:";
 
 if ($$res{error}){
@@ -490,7 +490,7 @@ if ( @results == 1
         print $cgi->redirect("/cgi-bin/koha/opac-detail.pl?biblionumber=$biblionumber");
     }
     exit;
-} elsif ( @results > 1 ) {
+} elsif ( @results > 1 and %{$res->facets}) {
     # build facets
     my $facets_ordered = C4::Search::Engine::Solr::GetFacetedIndexes("biblio");
     for my $index ( @$facets_ordered ) {
@@ -499,23 +499,24 @@ if ( @results == 1
             my @values;
             $index =~ m/^([^_]*)_(.*)$/;
             my ($type, $code) = ($1, $2);
-
+            my $avlist=C4::Search::Engine::Solr::GetAvlistFromCode($code);
             for ( my $i = 0 ; $i < scalar(@$facet) ; $i++ ) {
                 my $value = $facet->[$i++];
                 my $count = $facet->[$i];
                 utf8::encode($value);
                 my $lib;
-                if ( $code =~/branch/ ) {
-                    $lib = GetBranchName $value;
-                }
-                if ( $code =~/itype/  or $code =~ /ccode/ ) {
-                    $lib = GetSupportName $value;
-                }
-                if ( $code =~ /pubdate/ ) {
-                    $lib = C4::Dates->new($value, 'iso')->output('iso');
-                }
-                if ( my $avlist=C4::Search::Engine::Solr::GetAvlistFromCode($code) ) {
+                if ( $avlist ) {
                     $lib = GetAuthorisedValueLib $avlist,$value;
+                } else {
+                    if ( $code =~/branch/ ) {
+                        $lib = GetBranchName $value;
+                    }
+                    if ( $code =~/itype/  or $code =~ /ccode/ ) {
+                        $lib = GetSupportName $value;
+                    }
+                    if ( $code =~ /pubdate/ ) {
+                        $lib = C4::Dates->new($value, 'iso')->output('iso');
+                    }
                 }
                 $lib ||=$value;
                 push @values, {

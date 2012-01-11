@@ -306,7 +306,7 @@ sub plugin {
         my $orderby;
         $search = 'kw,wrdl=' . $search . ' and mc-itype=' . $itype if $itype;
         $search = C4::Search::Query->normalSearch($search);
-        my $results = SimpleSearch( $search, undef, $page, $resultsperpage );
+        my $results = SimpleSearch( $search, undef, { page => $page, count => $resultsperpage } );
         my $total_hits = $results->{'pager'}->{'total_entries'};
 
         ( $template, $loggedinuser, $cookie ) = get_template_and_user(

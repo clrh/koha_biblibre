@@ -62,7 +62,7 @@ my @frameworkcodeloop = map { {
 if ( $query ) {
 
     # Regular search
-    my $res = SimpleSearch( $query, { recordtype => 'biblio' }, $page, $count, $sort_by );
+    my $res = SimpleSearch( $query, { recordtype => 'biblio' }, { page => $page, count => $count, sort => $sort_by } );
     my @results = map { GetBiblio $_->{'values'}->{'recordid'} } @{ $res->items };
     my $pager = Data::Pagination->new(
         $res->{'pager'}->{'total_entries'},
