@@ -328,7 +328,7 @@ Examples:
 =cut
 
 sub SimpleSearch {
-    my ( $q, $filters, $params ) = @_;
+    my ( $q, $filters, $params, $caller ) = @_;
 
     $q         ||= '*:*';
     $filters   ||= {};
@@ -366,6 +366,8 @@ sub SimpleSearch {
     }
     $sc->options->{"sort"}           = $sort;
     $sc->options->{"fl"}             = $fl;
+    $sc->options->{caller}           = $$caller{caller_script} . ":" . $$caller{caller_linenumber}
+        if ( $caller );
 
     # Construct filters
     $sc->options->{'fq'} = [

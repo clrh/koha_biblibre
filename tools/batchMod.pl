@@ -135,6 +135,8 @@ if ( $op eq "action" ) {
 #        $dbh->{AutoCommit} = 0;
         my $callback = sub { };
 
+        warn "batchMod: begin batch process on $job_size items";
+
         # If we asked for background processing
         if ($runinbackground) {
             $job = put_in_background($job_size);
@@ -197,6 +199,7 @@ if ( $op eq "action" ) {
             }
             $i++;
         }
+        warn "batchMod: end batch process on $job_size items";
     }
 }
 
