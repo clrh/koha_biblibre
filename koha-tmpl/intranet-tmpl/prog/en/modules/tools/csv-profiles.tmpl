@@ -68,9 +68,6 @@ function reloadPage(p) {
 							<option value="#">Sharp (#)</option>
 							<option value=" ">Space ( )</option>
 							<option value="\t">Tabulation (\t)</option>
-							<option value="\n">Line Feed (\n)</option>
-							<option value="\r">Carriage return (\r)</option>
-							<option value="\r\n">CRLF (\r\n)</option>
 						    </select>
                             </li>
 
@@ -180,17 +177,6 @@ function reloadPage(p) {
 								<!--TMPL_ELSE -->
 								<option value="\t">Tabulation (\t)</option>
 								<!-- /TMPL_IF -->
-						    	<!-- TMPL_IF EXPR="selected_csv_separator eq '\n'" -->
-								<option value="\n" selected="selected">Line feed (\n)</option>
-								<!--TMPL_ELSE -->
-								<!-- TMPL_IF EXPR="selected_csv_separator eq '\n'" -->
-								<option value="\r" selected="selected">Carriage return (\r)</option>
-								<!--TMPL_ELSE -->
-								<!-- TMPL_IF EXPR="selected_csv_separator eq '\n'" -->
-								<option value="\r\n" selected="selected">CRLF (\r\n)</option>
-								<!--TMPL_ELSE -->
-								<option value="\n">Line feed (\n)</option>
-								<!-- /TMPL_IF -->
                             </select></li>
 
 						    <li><label for="field_separator">Field separator: </label>
@@ -232,17 +218,21 @@ function reloadPage(p) {
                                 <!--TMPL_ELSE -->
                                 <option value="\t">Tabulation (\t)</option>
                                 <!-- /TMPL_IF -->
-						    	<!-- TMPL_IF EXPR="selected_field_separator eq '\n'" -->
-								<option value="\n" selected="selected">Line feed (\n)</option>
-								<!--TMPL_ELSE -->
-								<!-- TMPL_IF EXPR="selected_field_separator eq '\n'" -->
-								<option value="\r" selected="selected">Carriage return (\r)</option>
-								<!--TMPL_ELSE -->
-								<!-- TMPL_IF EXPR="selected_field_separator eq '\n'" -->
-								<option value="\r\n" selected="selected">CRLF (\r\n)</option>
-								<!--TMPL_ELSE -->
-								<option value="\n">Line feed (\n)</option>
-								<!-- /TMPL_IF -->
+                                <!-- TMPL_IF EXPR="selected_field_separator eq '\\n'" -->
+                                <option value="\n" selected="selected">Line feed (\n)</option>
+                                <!--TMPL_ELSE -->
+                                <option value="\n">Line feed (\n)</option>
+                                <!-- /TMPL_IF -->
+                                <!-- TMPL_IF EXPR="selected_field_separator eq '\\r'" -->
+                                <option value="\r" selected="selected">Carriage return (\r)</option>
+                                <!--TMPL_ELSE -->
+                                <option value="\r">Carriage return (\r)</option>
+                                <!-- /TMPL_IF -->
+                                <!-- TMPL_IF EXPR="selected_field_separator eq '\\r\\n'" -->
+                                <option value="\r\n" selected="selected">CRLF (\r\n)</option>
+                                <!--TMPL_ELSE -->
+                                <option value="\r\n">CRLF (\r\n)</option>
+                                <!-- /TMPL_IF -->
 						    </select></li>
 
 
@@ -286,16 +276,20 @@ function reloadPage(p) {
                                 <!--TMPL_ELSE -->
                                 <option value="\t">Tabulation (\t)</option>
                                 <!-- /TMPL_IF -->
-						    	<!-- TMPL_IF EXPR="selected_subfield_separator eq '\n'" -->
-								<option value="\n" selected="selected">Line feed (\n)</option>
-								<!--TMPL_ELSE -->
-								<!-- TMPL_IF EXPR="selected_subfield_separator eq '\n'" -->
-								<option value="\r" selected="selected">Carriage return (\r)</option>
-								<!--TMPL_ELSE -->
-								<!-- TMPL_IF EXPR="selected_subfield_separator eq '\n'" -->
-								<option value="\r\n" selected="selected">CRLF (\r\n)</option>
-								<!--TMPL_ELSE -->
-								<option value="\n">Line feed (\n)</option>
+                                <!-- TMPL_IF EXPR="selected_subfield_separator eq '\\n'" -->
+                                <option value="\n" selected="selected">Line feed (\n)</option>
+                                <!--TMPL_ELSE -->
+                                <option value="\n">Line feed (\n)</option>
+                                <!-- /TMPL_IF -->
+                                <!-- TMPL_IF EXPR="selected_subfield_separator eq '\\r'" -->
+                                <option value="\r" selected="selected">Carriage return (\r)</option>
+                                <!--TMPL_ELSE -->
+                                <option value="\r">Carriage return (\r)</option>
+                                <!-- /TMPL_IF -->
+                                <!-- TMPL_IF EXPR="selected_subfield_separator eq '\\r\\n'" -->
+                                <option value="\r\n" selected="selected">CRLF (\r\n)</option>
+                                <!--TMPL_ELSE -->
+                                <option value="\r\n">CRLF (\r\n)</option>
                                 <!-- /TMPL_IF -->
 	
 						    </select></li>

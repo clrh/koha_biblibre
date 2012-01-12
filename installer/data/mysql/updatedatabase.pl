@@ -4343,7 +4343,7 @@ if ( C4::Context->preference("Version") < TransformToNum($DBversion) ) {
                     SELECT "*","*",itemtype,holdallowed from default_branch_item_rules defaults 
               ON DUPLICATE KEY update holdrestricted=defaults.holdallowed'
     );
-    for my $tablename qw(default_circ_rules default_branch_circ_rules default_branch_item_rules default_borrower_circ_rules) {
+    for my $tablename ( qw(default_circ_rules default_branch_circ_rules default_branch_item_rules default_borrower_circ_rules) ) {
         $dbh->do("DROP TABLE $tablename");
     }
     print "Upgrade done (Updating Circulation rules\n Inserting defaults values into issuingrules \n removing defaults table)\n";
@@ -5314,6 +5314,13 @@ if ( C4::Context->preference("Version") < TransformToNum($DBversion) ) {
         ALTER TABLE `borrowers` ADD `lostcomment` VARCHAR(255) DEFAULT NULL AFTER `lost`
     });
     print "Upgrade to $DBversion done (Add missing field borrower.lostcomment)\n";
+    SetVersion($DBversion);
+}
+
+$DBversion = "3.06.00.078";
+if ( C4::Context->preference("Version") < TransformToNum($DBversion) ) {
+    $dbh->do("ALTER TABLE `export_format` MODIFY `csv_separator` VARCHAR(4) NOT NULL, MODIFY `field_separator` VARCHAR(4) NOT NULL, MODIFY `subfield_separator` VARCHAR(4) NOT NULL");
+    print "Upgrade to $DBversion done (Modify column type for export_format table)\n";
     SetVersion($DBversion);
 }
 
