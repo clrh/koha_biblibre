@@ -4,4 +4,14 @@ $(document).ready(function(){
     if ( !location.href.match(reg) ) {
         $.session("advsearch_checkboxes", []);
     }
+
+    $("#searchsubmit").attr("been_submitted", "");
+
+    $("#searchsubmit").click(function() {
+        if ( $(this).attr("been_submitted") ) {
+            return false;
+        }
+        $(this).attr("been_submitted", "true");
+        $(this).val(_("Please wait..."));
+    } );
 });
