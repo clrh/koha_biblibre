@@ -11,6 +11,7 @@
         $('select[name="idx"]').attr('disabled', false);
         $('select[name="op"]').attr('disabled', false);
         set_values();
+        $("#submit").attr("been_submitted", "");
     });
 
   function set_values() {
@@ -37,6 +38,9 @@
   }
 
   function check_form() {
+    if ( $("#submit").attr("been_submitted") ) {
+        return false;
+    }
     $('select[name="idx"]').each( function() {
         var input_elt = $(this).find('~ input'); // Input element
         var op_elt = $(this).parent().next('div').find('select[name="op"]'); // Select op element
@@ -53,6 +57,8 @@
         $(first_select).attr('disabled', false);
         $(first_select).find('~ input').attr('disabled', false);
     }
+    $("#submit").attr("been_submitted", "true");
+    $("#submit").val(_("Please wait..."));
     return saveValues();
   }
 
@@ -212,7 +218,7 @@
     <!-- SEARCH BUTTONS -->
     <div class="yui-g">
         <div class="container" style="text-align: center;">
-            <input class="submit" type="submit" accesskey="s" name="do" title="Search" onclick="return check_form();" value="Search" />
+            <input id="submit" class="submit" type="submit" accesskey="s" name="do" title="Search" onclick="return check_form();" value="Search" />
             <!-- TMPL_IF NAME="expanded_options" -->
                 <a href="/cgi-bin/koha/opac-search.pl?expanded_options=0">[Fewer Options]</a>
             <!-- TMPL_ELSE -->
