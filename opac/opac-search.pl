@@ -367,7 +367,9 @@ my $total = $res->{'pager'}->{'total_entries'},
 my $newsearchcookie;
 my $limit_desc;
 my $limit_cgi;
-if ( C4::Context->preference('EnableOpacSearchHistory') ) {
+if ( C4::Context->preference('EnableOpacSearchHistory')
+  and $format !~ /rss|atom|opensearchdescription/ )
+{
     my @recentSearches;
 
     # Getting the (maybe) already sent cookie
