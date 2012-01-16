@@ -101,6 +101,10 @@ BEGIN {
     $VERSION = '3.00.00.036';
 }
 
+END {
+    C4::Context->close_dbh;
+}
+
 use DBI;
 use ZOOM;
 use XML::Simple;
@@ -774,6 +778,13 @@ sub dbh {
     $context->{"dbh"} = &_new_dbh();
 
     return $context->{"dbh"};
+}
+
+sub close_dbh {
+    my $self = shift;
+    if ( defined( $context->{dbh} ) ) {
+        return $context->{dbh}->disconnect;
+    }
 }
 
 =item new_dbh
