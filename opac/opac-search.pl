@@ -560,9 +560,9 @@ $template->param(
 
 # VI. BUILD THE TEMPLATE
 # Build drop-down list for 'Add To:' menu...
-my $count = 10;
-my ($pubshelves) = GetRecentShelves(2, $count, $borrowernumber);
-my ($openshelves) = GetRecentShelves(3, $count, undef); # Also get 'open' shelves
+my $shelfcount = 10;
+my ($pubshelves) = GetRecentShelves(2, $shelfcount, $borrowernumber);
+my ($openshelves) = GetRecentShelves(3, $shelfcount, undef); # Also get 'open' shelves
 push @$pubshelves, @{ $openshelves };
 if ($pubshelves) {
     $template->param( addpubshelves     => scalar(@$pubshelves) );
