@@ -192,6 +192,15 @@ while ( $continue and defined( my $line = $file->read ) ) { # FIXME $file->read 
             close $fh;
             # Reinitialize timer
             $$timer{ $recordtype } = undef;
+            # Re-read the file from beginning, since file has been modified by
+            # remove_indexed_records, and position in the file can be wrong
+            $file = File::Tail->new(
+                name => $filepath,
+                max_interval => $MAX_INTERVAL,
+                nowait => 1,
+                resetafter => 10,
+                tail => -1
+            );
         } else {
             #$logger and $logger->write("Nothing todo")
         }
