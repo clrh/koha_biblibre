@@ -164,6 +164,9 @@ while ( $continue and defined( my $line = $file->read ) ) { # FIXME $file->read 
                 ? $$max_delta{ $$record{ recordtype } } || $DEFAULT_MAX_DELTA
                 : $max_delta;
 
+    } else {
+        # Sleep. File::Tail no sleep with nowait = 1
+        sleep $MAX_INTERVAL;
     }
 
     # If a record already exists
@@ -206,8 +209,6 @@ while ( $continue and defined( my $line = $file->read ) ) { # FIXME $file->read 
         }
     }
 
-    # Sleep. File::Tail no sleep with nowait = 1
-    sleep $MAX_INTERVAL;
 }
 
 =head2 append
