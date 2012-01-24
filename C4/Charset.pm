@@ -476,7 +476,7 @@ sub _default_unimarc_charconv_to_utf8 {
     }
     my @errors;
     my @all_errors  = ();
-    if(not $encoding or $encoding =~ /^03/) {
+    if(not $encoding or $encoding =~ /^03/ or $encoding =~ /03$/) {
         my $trial_marc8 = $marc_record->clone();
         @errors      = _marc_iso5426_to_utf8( $trial_marc8, $marc_flavour );
         unless (@errors) {
@@ -485,7 +485,7 @@ sub _default_unimarc_charconv_to_utf8 {
         push @all_errors, @errors;
     }
 
-    if(not $encoding or $encoding =~ /^01/) {
+    if(not $encoding or $encoding =~ /^01/ or $encoding =~ /01$/) {
         my $trial_8859_1 = $marc_record->clone();
         @errors = _marc_to_utf8_via_text_iconv( $trial_8859_1, $marc_flavour, 'iso-8859-1' );
         unless (@errors) {
