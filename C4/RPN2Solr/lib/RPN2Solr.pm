@@ -84,7 +84,7 @@ sub search_handler {
 
     my $query = RPN2Solr( $$args{QUERY} );
     $query = C4::Search::Query->normalSearch($query);
-    my $results = SimpleSearch( $query, {recordtype => join ' OR ', @database_list} );
+    my $results = SimpleSearch( $query, {recordtype => join ' OR ', @database_list}, {fl => ["recordtype"]} );
 
     $$args{HITS} = $$results{pager}{total_entries};
     $$args{HANDLE} = $results;
