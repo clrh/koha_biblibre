@@ -5324,6 +5324,18 @@ if ( C4::Context->preference("Version") < TransformToNum($DBversion) ) {
     SetVersion($DBversion);
 }
 
+$DBversion = "3.06.00.080";
+if ( C4::Context->preference("Version") < TransformToNum($DBversion) ) {
+    $dbh->do("
+        INSERT IGNORE INTO `systempreferences`
+            (variable,value,explanation,options,type)
+            VALUES('hidenoitems','0','This syspref allows to hide biblio if there is no items to show (see OpacHiddenItems)','','YesNo');
+    ");
+    print "Upgrade to $DBversion done (Adding hidenoitems syspref)\n";
+    SetVersion($DBversion);
+}
+
+
 =item DropAllForeignKeys($table)
 
   Drop all foreign keys of the table $table

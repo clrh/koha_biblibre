@@ -285,3 +285,5 @@ INSERT INTO `systempreferences` (variable,value,options,explanation,type) VALUES
 INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('numFacetsDisplay','100','Correspond au nombre maximum de facettes à afficher pour un index','','Integer')
 INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('SearchOPACHides','','Construit la requête à l\'opac avec ce filtre.','','Free');
 INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('numSearchRSSResults',50,'Nombre de résultats à afficher par défaut sur un fil RSS',NULL,'Integer');
+INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('OpacHiddenItems','','Masquer des exemplaires à l''OPAC','','Textarea');
+INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('hidenoitems','0','Masquer notice si aucun exemplaire à afficher (cf. OpacHiddenItems)','','YesNo');
