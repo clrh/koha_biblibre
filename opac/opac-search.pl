@@ -468,7 +468,7 @@ for my $searchresult ( @{ $res->items } ) {
         if (C4::Context->preference('hidelostitems') and $biblio->{items_count} > 0 and $biblio->{itemlostcount} >= $biblio->{items_count}) {
             $display = 0;
         }
-        if (C4::Context->preference('hidenoitems') and $biblio->{available_count} == 0) {
+        if (C4::Context->preference('hidenoitems') and $biblio->{availablecount} == 0) {
             $display = 0;
         }
     }
