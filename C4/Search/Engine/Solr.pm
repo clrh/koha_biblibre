@@ -625,21 +625,33 @@ sub NormalizeDate {
 sub buildDateOperand {
     my $operand = shift;
     $operand =~ s/\\:/:/g;
-    $operand =~ s/^"(.*)"$/$1/; # Remove existing quote around date
-    my $date = '"' . NormalizeDate($operand) . '"'
-            if $operand
-                and $operand ne '""' # FIX for rpn (harvestdate,alwaysMatches="")
-                and not $operand =~ /\[.*TO.*\]/;
-    $operand = $date if defined $date;
 
-    return "[" . NormalizeDate($1) . " TO *]"
-            if $operand =~ /\[(.*)\sTO\s\*\]/;
-    return "[* TO " . NormalizeDate($1) . "]"
-            if $operand =~ /\[\*\sTO\s(.*)\]/;
-    return "[" . NormalizeDate($1) . " TO " . NormalizeDate($2) . "]"
-            if $operand =~ /\[(.*)\sTO\s(.*)\]/;
+    my @r;
+    if ( $operand =~ qq{ TO } or not $operand =~ qq{ } ) {
+        $operand =~ s/^"(.*)"$/$1/; # Remove existing quote around date
+        my $date = NormalizeDate($operand);
+        $date = qq{"$date"}
+                if defined $date and $operand
+                    and $operand ne '""' # FIX for rpn (harvestdate,alwaysMatches="")
+                    and not $operand =~ /\[.*TO.*\]/;
+        $operand = $date if defined $date;
 
-    return $operand;
+        return "[" . NormalizeDate($1) . " TO *]"
+                if $operand =~ /\[(.*)\sTO\s\*\]/;
+        return "[* TO " . NormalizeDate($1) . "]"
+                if $operand =~ /\[\*\sTO\s(.*)\]/;
+        return "[" . NormalizeDate($1) . " TO " . NormalizeDate($2) . "]"
+                if $operand =~ /\[(.*)\sTO\s(.*)\]/;
+        return $operand;
+    }
+
+    for my $string ( split ' ', $operand ) {
+        $string =~ s/\(//;
+        $string =~ s/\)//;
+        push @r, buildDateOperand( $string );
+    }
+
+    return qq{(} . ( join ' ', @r ) . qq{)};
 }
 
 # overide add method in Data::SearchEngine::Solr to not use optimize function!
