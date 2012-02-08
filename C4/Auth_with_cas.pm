@@ -62,13 +62,29 @@ sub getMultipleAuth {
    return $casservers; 
 }
 
+# Returns the query string without the ticket parameter
+sub _getParametersString {
+    my ($query) = @_;
+    my @params = $query->param();
+
+    # Build query string (without the ticket parameter)
+    my $uri = join(
+        '&',
+        map {
+            ($_ eq "ticket" or $_ eq "logout.x") ? () :  $_ . "=" . $query->param($_)
+        } @params
+    );
+    $uri = "?" . $uri if ($uri);
+
+    return $uri;
+}
+
 # Logout from CAS
 sub logout_cas {
     my ($query) = @_;
     my $uri = $ENV{'SCRIPT_URI'};
     my $casparam = $query->param('cas');
-    # FIXME: This should be more generic and handle whatever parameters there might be
-    $uri .= "?cas=" . $casparam if (defined $casparam);
+    $uri .= _getParametersString($query);
     $casparam = $defaultcasserver if (not defined $casparam);
     my $cas = Authen::CAS::Client->new($casservers->{$casparam});
     print $query->redirect( $cas->logout_url(url => $uri));
@@ -79,8 +95,7 @@ sub login_cas {
     my ($query) = @_;
     my $uri = $ENV{'SCRIPT_URI'};
     my $casparam = $query->param('cas');
-    # FIXME: This should be more generic and handle whatever parameters there might be
-    $uri .= "?cas=" . $casparam if (defined $casparam);
+    $uri .= _getParametersString($query);
     $casparam = $defaultcasserver if (not defined $casparam);
     my $cas = Authen::CAS::Client->new($casservers->{$casparam});
     print $query->redirect( $cas->login_url($uri));
@@ -92,8 +107,7 @@ sub login_cas_url {
     my ($query, $key) = @_;
     my $uri = $ENV{'SCRIPT_URI'};
     my $casparam = $query->param('cas');
-    # FIXME: This should be more generic and handle whatever parameters there might be
-    $uri .= "?cas=" . $casparam if (defined $casparam);
+    $uri .= _getParametersString($query);
     $casparam = $defaultcasserver if (not defined $casparam);
     $casparam = $key if (defined $key);
     my $cas = Authen::CAS::Client->new($casservers->{$casparam});
@@ -108,8 +122,7 @@ sub checkpw_cas {
     my $retnumber;
     my $uri = $ENV{'SCRIPT_URI'};
     my $casparam = $query->param('cas');
-    # FIXME: This should be more generic and handle whatever parameters there might be
-    $uri .= "?cas=" . $casparam if (defined $casparam);
+    $uri .= _getParametersString($query);
     $casparam = $defaultcasserver if (not defined $casparam);
     my $cas = Authen::CAS::Client->new($casservers->{$casparam});
 
@@ -144,7 +157,11 @@ sub checkpw_cas {
             $debug and warn "User $userid is not a valid Koha user";
 
         } else {
-            $debug and warn "Invalid session ticket : $ticket";
+            if ($debug) {
+                warn "Invalid session ticket : $ticket";
+                warn "Error: " . $val->error() if ($val->is_error());
+                warn "Message: " . $val->message() if ($val->is_failure());
+            }
             return 0;
         }
     }
