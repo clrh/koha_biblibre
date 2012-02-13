@@ -389,7 +389,7 @@ $got = C4::Search::Query->buildQuery($indexes, $operands, $operators);
 $expected = qq{(em$titleindex:"foo \\"bar")};
 is($got, $expected, qq{Test just one \" (buildQuery)});
 
-BEGIN { $tests += 12 } # Test for date index
+BEGIN { $tests += 15 } # Test for date index
 $q = qq{pubdate:2000};
 $got = C4::Search::Query->normalSearch($q);
 $expected = qq{$pubdateindex:"2000-01-01T00:00:00Z"};
@@ -471,6 +471,27 @@ is($got, $expected, qq{Date index format iso [date TO *] (buildQuery)});
 $got = C4::Search::Query->buildQuery($indexes, $operands, $operators);
 $expected = qq{$pubdateindex:[* TO 2011-01-01T00:00:00Z]};
 is($got, $expected, qq{Date index format iso [* TO date] (buildQuery)});
+
+@$operands = (qq{(1984 OR 10-1990 OR 01-10-2001)});
+@$indexes = ("pubdate");
+@$operators = ();
+$got = C4::Search::Query->buildQuery($indexes, $operands, $operators);
+$expected = qq{$pubdateindex:("1984-01-01T00:00:00Z" OR "1990-10-01T00:00:00Z" OR "2001-10-01T00:00:00Z")};
+is($got, $expected, qq{Date index format multi-operand (buildQuery)});
+
+@$operands = (qq{("1984" OR 10-1990 OR "01-10-2001")});
+@$indexes = ("pubdate");
+@$operators = ();
+$got = C4::Search::Query->buildQuery($indexes, $operands, $operators);
+$expected = qq{$pubdateindex:("1984-01-01T00:00:00Z" OR "1990-10-01T00:00:00Z" OR "2001-10-01T00:00:00Z")};
+is($got, $expected, qq{Date index format multi-operand (with quotes) (buildQuery)});
+
+@$operands = (qq{("1984" 10-1990 "01-10-2001")});
+@$indexes = ("pubdate");
+@$operators = ();
+$got = C4::Search::Query->buildQuery($indexes, $operands, $operators);
+$expected = qq{$pubdateindex:("1984-01-01T00:00:00Z" "1990-10-01T00:00:00Z" "2001-10-01T00:00:00Z")};
+is($got, $expected, qq{Date index format multi-operand (AND) (buildQuery) END});
 
 BEGIN { $tests += 8 } # Test for exact match
 $q = qq{title:"Le crépuscule des maudits"};

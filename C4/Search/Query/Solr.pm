@@ -76,7 +76,8 @@ sub buildQuery {
         }
         # And others
         $index_name = @$indexes[$i] if @$indexes[$i];
-        given (uc(@$operators[$i-1])) {
+        my $operator = defined @$operators[$i-1] ? @$operators[$i-1] : 'AND';
+        given ( uc ( $operator ) ) {
             when ('OR'){
                 $q .= BuildTokenString($index_name, $kw, 'OR');
             }
@@ -102,7 +103,7 @@ sub BuildTokenString {
         # Operand can contains an expression in brackets
         if (
             $string =~ / /
-                and not ( $string =~ /^\(.*\)$/ and ( $string =~ / OR / or $string =~ / AND / or $string =~ / NOT / ) )
+                and not ( $string =~ /^\(.*\)$/ )
                 and not $string =~ /\[.*TO.*\]/ ) {
             my @dqs; #double-quoted string
             while ( $string =~ /"(?:[^"\\]++|\\.)*+"/g ) {
@@ -110,7 +111,7 @@ sub BuildTokenString {
                 $string =~ s/\ *\Q$&\E\ *//; # Remove useless space before and after
             }
 
-            my @words = split ' ', $string;
+            my @words = defined $string ? split ' ', $string : undef;
             my $join = join qq{ AND } , map {
                 my $value = $_;
                 if ( $index =~ /^date_/ ) {
