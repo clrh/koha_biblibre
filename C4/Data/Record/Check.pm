@@ -61,23 +61,24 @@ OR adds a new authority record
 sub BiblioAddAuthorities {
     my ( $record, $frameworkcode ) = @_;
     my $dbh   = C4::Context->dbh;
-    my $query = $dbh->prepare(
-        qq|
-SELECT authtypecode,tagfield,tagsubfield
-FROM marc_subfield_structure 
-WHERE frameworkcode=? 
-AND (authtypecode IS NOT NULL AND authtypecode<>\"\")|
-    );
+    my $query = $dbh->prepare(qq|
+        SELECT authtypecode,tagfield,tagsubfield
+        FROM marc_subfield_structure
+        WHERE frameworkcode=?
+        AND (authtypecode IS NOT NULL AND authtypecode<>\"\")
+    |);
 
-    # SELECT authtypecode,tagfield
-    # FROM marc_subfield_structure
-    # WHERE frameworkcode=?
-    # AND (authtypecode IS NOT NULL OR authtypecode<>\"\")|);
     $query->execute($frameworkcode);
     my ( $countcreated, $countlinked );
     while ( my $data = $query->fetchrow_hashref ) {
         foreach my $field ( $record->field( $data->{tagfield} ) ) {
+            # For each field linked to an authority type
+
+            # Skip this field if already linked to an authority
             next if ( $field->subfield('9') );
+
+            my $authtypedata = GetAuthType( $data->{authtypecode} );
+            next unless $authtypedata;
 
             # No authorities id in the tag.
             # Search if there is any authorities to link to.
@@ -88,31 +89,41 @@ AND (authtypecode IS NOT NULL AND authtypecode<>\"\")|
                 $authtype_index => $data->{authtypecode},
             };
             my $auth_heading_index_name = C4::Search::Query::getIndexName('auth-heading');
-            for ( $field->subfields ) {
-                $query .= qq{ AND $auth_heading_index_name:"$_->[1]" } if $_->[0] =~ /[A-z]/;
+            foreach ( $field->subfields ) {
+                my $subfieldtag = $_->[0];
+                my $subfieldvalue = $_->[1];
+                utf8::encode($subfieldvalue);
+                if ($subfieldtag =~ /[A-z]/) {
+                    $query .= qq{ AND $auth_heading_index_name:"$subfieldvalue" };
+                }
             }
             my $auth_heading_main_index_name = C4::Search::Query::getIndexName('auth-heading-main');
-            foreach ($field->subfield($data->{tagsubfield})) {
-                $query .= qq{ AND $auth_heading_main_index_name:"$_" };
+            foreach my $subfieldvalue ($field->subfield($data->{tagsubfield})) {
+                utf8::encode($subfieldvalue);
+                $query .= qq{ AND $auth_heading_main_index_name:"$subfieldvalue" };
             }
             my $res = SimpleSearch( $query, $filters );
-            my $hits = $$res{'pager'}{'total_entries'};
-            if ( !$$res{error} and $hits == 1 ) {
-                my $item = @{ $res->items }[0];
-                $field->add_subfields( '9' => $item->{'values'}->{'recordid'} );
-                $countlinked++;
-            } elsif ( $res and $hits > 1 ) {
-                #More than One result
-                #This can comes out of a lack of a subfield.
-                #         my $marcrecord = MARC::File::USMARC::decode($results->[0]);
-                #         $record->field($data->{tagfield})->add_subfields('9'=>$marcrecord->field('001')->data);
-                $countlinked++;
-            } else {
-                #There are no results, build authority record, add it to Authorities, get authid and add it to 9
+            my $duplicate_found = 0;
+            if ( !$$res{error} ) {
+                foreach my $item (@{ $res->items }) {
+                    # Search returned results, loop over all of them
+                    # to find a matching authority
+                    if( field_is_authority_duplicate($field, $item->{values}->{recordid},
+                        $authtypedata->{auth_tag_to_report})
+                    ) {
+                        $field->add_subfields( '9' => $item->{'values'}->{'recordid'} );
+                        $countlinked++;
+                        $duplicate_found = 1;
+                        last;
+                    }
+                }
+            }
+
+            if(not $duplicate_found) {
+                # No duplicate authority was found,
+                # build authority record, add it to Authorities, get authid and add it to 9
                 ###NOTICE : This is only valid if a subfield is linked to one and only one authtypecode
                 ###NOTICE : This can be a problem. We should also look into other types and rejected forms.
-                my $authtypedata = GetAuthType( $data->{authtypecode} );
-                next unless $authtypedata;
                 my $marcrecordauth = MARC::Record->new();
                 if ( C4::Context->preference('marcflavour') eq 'MARC21' ) {
                     $marcrecordauth->leader('     nz  a22     o  4500');
@@ -147,6 +158,44 @@ AND (authtypecode IS NOT NULL AND authtypecode<>\"\")|
     }
     return ( $countlinked, $countcreated );
 }
+
+=head2 field_is_authority_duplicate
+
+    if(field_is_authority_duplicate($field, $authid, $authfieldtag)) {
+        print "duplicate";
+    }
+
+Given a MARC::Field ($field), an authority id ($authid) and the authority field
+tag to report for this authority type ($authfieldtag), this subroutine check if
+the field and the authority are equivalent, according to system preference
+AuthSubfieldsToCheck.
+
+Return true if they are equivalent, false otherwise
+
+=cut
+
+sub field_is_authority_duplicate {
+    my ($field, $authid, $authfieldtag) = @_;
+
+    my $auth = GetAuthority($authid);
+    return 0 unless $auth;
+
+    my @subfields_to_check = split / /, C4::Context->preference('AuthSubfieldsToCheck');
+    foreach my $subfieldtag (@subfields_to_check) {
+        my @field_values = $field->subfield($subfieldtag);
+        my @auth_values = $auth->subfield($authfieldtag, $subfieldtag);
+
+        # Remove leading, trailing and multiple whitespaces
+        s/^\s+// foreach (@field_values, @auth_values);
+        s/\s+$// foreach (@field_values, @auth_values);
+        s/\s+/ / foreach (@field_values, @auth_values);
+
+        # Return if arrays are not equals
+        return 0 if(not @field_values ~~ @auth_values);
+    }
+    return 1;
+}
+
 
 1;
 

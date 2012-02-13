@@ -5335,6 +5335,17 @@ if ( C4::Context->preference("Version") < TransformToNum($DBversion) ) {
     SetVersion($DBversion);
 }
 
+$DBversion = "3.06.00.081";
+if ( C4::Context->preference("Version") < TransformToNum($DBversion) ) {
+    $dbh->do("
+        INSERT IGNORE INTO `systempreferences`
+            (variable,value,explanation,options,type)
+            VALUES('AuthSubfieldsToCheck','a b x y z','Space-separated list of subfields to check to detect if two authorities are equivalent (only used with BiblioAddsAuthorities)','','Free')
+    ");
+    print "Upgrade to $DBversion done (Add new system preference AuthSubfieldsToCheck)\n";
+    SetVersion($DBversion);
+}
+
 
 =item DropAllForeignKeys($table)
 

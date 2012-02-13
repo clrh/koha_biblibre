@@ -105,6 +105,7 @@ $tabsysprefs{authoritysep}          = "Authorities";
 $tabsysprefs{AuthDisplayHierarchy}  = "Authorities";
 $tabsysprefs{dontmerge}             = "Authorities";
 $tabsysprefs{BiblioAddsAuthorities} = "Authorities";
+$tabsysprefs{AuthSubfieldsToCheck}  = "Authorities";
 
 # Cataloguing
 $tabsysprefs{advancedMARCeditor}          = "Cataloging";

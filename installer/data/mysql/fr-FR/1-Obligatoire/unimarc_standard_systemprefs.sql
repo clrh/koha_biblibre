@@ -287,3 +287,4 @@ INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES
 INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('numSearchRSSResults',50,'Nombre de résultats à afficher par défaut sur un fil RSS',NULL,'Integer');
 INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('OpacHiddenItems','','Masquer des exemplaires à l''OPAC','','Textarea');
 INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('hidenoitems','0','Masquer notice si aucun exemplaire à afficher (cf. OpacHiddenItems)','','YesNo');
+INSERT INTO `systempreferences` (variable,value, explanation,options,type) VALUES('AuthSubfieldsToCheck','a b x y z','Liste de sous-champs (séparés par des espaces) à vérifier pour détecter si deux autorités sont équivalentes (uniquement utilisée avec BiblioAddsAuthorities)','','Free');
