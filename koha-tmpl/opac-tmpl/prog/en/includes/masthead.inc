@@ -185,5 +185,11 @@
     You did not specify any search criteria.
     <!-- /TMPL_IF -->
 </p>
+<!-- TMPL_IF name="OPACNoResultsFound" -->
+    <div id="noresultsfound">
+        <!-- TMPL_VAR NAME="OPACNoResultsFound" -->
+    </div>
+<!-- /TMPL_IF -->
+
 </div>
 <!-- /TMPL_IF --></p><!-- /TMPL_IF --></div>

@@ -305,3 +305,4 @@ INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES
 INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('numSearchRSSResults',50,'Specify the maximum number of results to display on a RSS page of results',NULL,'Integer');
 INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('OpacHiddenItems','','This syspref allows to define custom rules for hiding specific items at opac. See docs/opac/OpacHiddenItems.txt for more informations.','','Textarea');
 INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('hidenoitems','0','This syspref allows to hide biblio if there is no items to show (see OpacHiddenItems)','','YesNo');
+INSERT INTO `systempreferences` (variable,value,explanation,options,type) VALUES('OPACNoResultsFound','','Display this HTML when no results are found for a search in the OPAC','70|10','Textarea');
