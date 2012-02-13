@@ -56,8 +56,6 @@
 <!-- /TMPL_IF -->
 
 <script type="text/javascript" src="<!-- TMPL_VAR name="themelang" -->/lib/jquery/plugins/jquery.hoverIntent.minified.js"></script>
-<script type="text/javascript" language="javascript"
-<!-- TMPL_IF NAME="opacbookbag" -->src="<!-- TMPL_VAR NAME="themelang" -->/js/basket.js"><!-- TMPL_ELSIF NAME="virtualshelves" -->src="<!-- TMPL_VAR NAME="themelang" -->/js/basket.js"><!-- TMPL_ELSE -->>var readCookie;<!-- /TMPL_IF --></script>
 
 <script type="text/javascript" language="javascript">
     //<![CDATA[
@@ -77,6 +75,7 @@
             var MSG_NO_RECORD_SELECTED = _("No item was selected");
         <!-- /TMPL_IF -->
     <!-- /TMPL_IF -->
+
     <!-- TMPL_IF NAME="OPACAmazonCoverImages" -->
         $(window).load(function() {
             verify_images();
@@ -92,6 +91,9 @@
     <!-- /TMPL_IF -->
     //]]>
 </script>
+
+<script type="text/javascript" language="javascript"
+<!-- TMPL_IF NAME="opacbookbag" -->src="<!-- TMPL_VAR NAME="themelang" -->/js/basket.js"><!-- TMPL_ELSIF NAME="virtualshelves" -->src="<!-- TMPL_VAR NAME="themelang" -->/js/basket.js"><!-- TMPL_ELSE -->>var readCookie;<!-- /TMPL_IF --></script>
 
 <!-- TMPL_IF NAME="GoogleJackets" -->
     <script type="text/javascript" language="javascript" src="<!-- TMPL_VAR NAME="themelang" -->/js/google-jackets.js"></script>
