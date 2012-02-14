@@ -268,6 +268,7 @@ sub index_records {
        if ( $@ ) {
            $logger and $logger->write("Thread return an error ($! ; $@)");
        }
+       exit;
     }
 }
 
@@ -277,7 +278,6 @@ Launching indexation to call C4::Search::Engine::Solr::IndexRecord;
 sub launch_indexation {
     my ( $recordtype, $recordids ) = @_;
     C4::Search::Engine::Solr::IndexRecord( $recordtype, $recordids );
-    exit;
 }
 
 =head2 remove_indexed_records
