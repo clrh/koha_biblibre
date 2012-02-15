@@ -1,9 +1,8 @@
 #!/usr/bin/perl
 # script that rebuild thesaurus from biblio table.
 
-use strict;
+use Modern::Perl;
 
-#use warnings; FIXME - Bug 2505
 BEGIN {
 
     # find Koha's Perl modules
@@ -18,6 +17,7 @@ use C4::Search;
 use C4::Biblio;
 use C4::AuthoritiesMarc;
 use Time::HiRes qw(gettimeofday);
+use Storable;
 
 use Getopt::Long;
 my ( $version, $verbose, $mergefrom, $mergeto, $noconfirm, $batch );
@@ -30,7 +30,7 @@ GetOptions(
     'b'   => \$batch,
 );
 
-if ( $version || ( $mergefrom eq '' && !$batch ) ) {
+if ( $version || ( (not $mergefrom) && !$batch ) ) {
     print <<EOF
 Script to merge an authority into another
 parameters :
@@ -77,7 +77,6 @@ unless ( $noconfirm || $batch ) {
 my $starttime = gettimeofday;
 print "Merging\n" unless $noconfirm;
 if ($batch) {
-    my @authlist;
     my $cgidir = C4::Context->intranetdir . "/cgi-bin";
     unless ( opendir( DIR, "$cgidir/tmp/modified_authorities" ) ) {
         $cgidir = C4::Context->intranetdir;
@@ -86,11 +85,12 @@ if ($batch) {
     while ( my $authid_filename = readdir(DIR) ) {
         if ( $authid_filename =~ /\.authid$/ ) {
             my $authid = $authid_filename;
+            my $filepath = "$cgidir/tmp/modified_authorities/$authid_filename";
             $authid =~ s/\.authid$//;
             print "managing $authid\n" if $verbose;
-            my $authfrom = retrieve $authid_filename;
+            my $authfrom = retrieve $filepath;
             merge( $authid, $authfrom, $authid, $authto ) ;
-            unlink $cgidir . '/tmp/modified_authorities/' . $authid . '.authid';
+            unlink($filepath) or warn "Couldn't unlink file $filepath: $!";
         }
     }
     closedir DIR;
@@ -101,4 +101,4 @@ if ($batch) {
     }
 }
 my $timeneeded = gettimeofday - $starttime;
-print "Done in $timeneeded seconds" unless $noconfirm;
+print "Done in $timeneeded seconds\n" unless $noconfirm;
