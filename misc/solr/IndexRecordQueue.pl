@@ -110,6 +110,11 @@ if ( $opts{"-a"} ) {
     add( $opts{"-a"}, $filepath );
 } else {
     daemonize();
+    if ( -f $pidpath ) {
+        $logger and $logger->write("SET mode 666 on $pidpath");
+        my $mode = 0666;
+        chmod $mode, $pidpath;
+    }
 }
 
 # If we want to return status or to add records, we do not want to require C4::Search
