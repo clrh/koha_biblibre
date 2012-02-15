@@ -85,11 +85,6 @@ if ($completedJobID) {
             # parent
             # return job ID as JSON
 
-            # prevent parent exiting from
-            # destroying the kid's database handle
-            # FIXME: according to DBI doc, this may not work for Oracle
-            $dbh->{InactiveDestroy} = 1;
-
             my $reply = CGI->new("");
             print $reply->header( -type => 'text/html' );
             print "{ jobID: '$jobID' }";
@@ -97,6 +92,13 @@ if ($completedJobID) {
         } elsif ( defined $pid ) {
 
             # child
+
+            # close dbh connection now to force C4::Context->dbh to create
+            # a new database handle, since it will be closed when parent
+            # exits and it can cause connection errors
+            C4::Context->close_dbh;
+            $dbh = C4::Context->dbh;
+
             # close STDOUT to signal to Apache that
             # we're now running in the background
             close STDOUT;
