@@ -167,7 +167,6 @@ while ( $continue and defined( my $line = $file->read ) ) { # FIXME $file->read 
     }
 
     # If a record already exists
-#    while ( my ( $recordtype, $recordids ) = each %records ) {
     for my $recordtype ( keys %records ) {
         my $recordids = $records{$recordtype};
         next if scalar( @$recordids ) == 0; # In fact, there is no record
@@ -178,20 +177,25 @@ while ( $continue and defined( my $line = $file->read ) ) { # FIXME $file->read 
         if ( scalar( @$recordids ) >= $$mr { $recordtype }
                 or int( $$timer{ $recordtype }->elapsed ) >= $$ms{ $recordtype } ) {
             $logger and $logger->write("We have " . scalar( @$recordids ) . " records for $recordtype and " . int( $$timer{ $recordtype }->elapsed ) . "seconds since first add");
-            # Lock file
-            open my $fh, "+<", $filepath or die "Can't open $filepath: $!";
-            lock_file( $fh );
+
             # Index records
             index_records( $recordtype, $recordids );
             # Remove theses records from file
-            remove_indexed_records( $recordtype, $recordids, $fh );
+            remove_indexed_records( $recordtype, $recordids );
             # Remove recordids for this recordtype
             $records{$recordtype} = [];
-            # Unlock
-            unlock( $fh );
-            close $fh;
+
             # Reinitialize timer
             $$timer{ $recordtype } = undef;
+            # Re-read the file from beginning, since file has been modified by
+            # remove_indexed_records, and position in the file can be wrong
+            $file = File::Tail->new(
+                name => $filepath,
+                max_interval => $MAX_INTERVAL,
+                nowait => 1,
+                resetafter => 10,
+                tail => -1
+            );
         } else {
             #$logger and $logger->write("Nothing todo")
         }
@@ -207,7 +211,7 @@ Each recordids appears just one time.
 =cut
 sub append {
     my ( $records, $record ) = @_;
-    
+
     my $recordtype = $$record{recordtype};
     my $recordids = $$record{recordids};
     $$records{ $recordtype } = () if not defined $$records{ $recordtype };
@@ -264,6 +268,7 @@ sub index_records {
        if ( $@ ) {
            $logger and $logger->write("Thread return an error ($! ; $@)");
        }
+       exit;
     }
 }
 
@@ -273,16 +278,18 @@ Launching indexation to call C4::Search::Engine::Solr::IndexRecord;
 sub launch_indexation {
     my ( $recordtype, $recordids ) = @_;
     C4::Search::Engine::Solr::IndexRecord( $recordtype, $recordids );
-    exit;
 }
 
 =head2 remove_indexed_records
 Rewrite file without indexed records.
 =cut
 sub remove_indexed_records {
-    my ( $recordtype, $recordids, $fh ) = @_;
+    my ( $recordtype, $recordids ) = @_;
 
     $logger and $logger->write("Removing records ($recordtype " . join(',', @$recordids) . ") from file");
+    # Lock file
+    open my $fh, "+<", $filepath or die "Can't open $filepath: $!";
+    lock_file( $fh );
     tie my @lines, 'Tie::File', $fh;
     for my $line ( @lines ) {
         $line =~ s/^$recordtype(?: \d*)*\K $_( |$)/$1/ for @$recordids;
@@ -291,6 +298,9 @@ sub remove_indexed_records {
     }
     @lines = grep {!/^$/} @lines;
     untie @lines;
+    # Unlock
+    unlock( $fh );
+    close $fh;
 }
 
 =head2 lock_file
