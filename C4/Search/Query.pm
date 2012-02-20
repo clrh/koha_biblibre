@@ -95,9 +95,11 @@ sub getSolrIndexFromZebra {
     for my $i ( values %indexes_mapper ) {
         for ( @{ $$i{Zebra} }{qw/ rpn_index ccl_index_name /} ) {
             next if not defined;
+
             return $$i{Solr}{name} if
-                $_ =~ /\S\d+\S/ &&
-                $_ ~~ $name;
+                    $_ =~ /^\d+$/
+                and $name =~ /^\d+$/
+                and $_ == $name;
 
             return $$i{Solr}{name} if
                 $_ eq $name;
