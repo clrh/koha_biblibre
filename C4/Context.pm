@@ -783,7 +783,7 @@ sub dbh {
 sub close_dbh {
     my $self = shift;
     if ( defined( $context->{dbh} ) ) {
-        return $context->{dbh}->disconnect;
+        $context->{dbh} = undef;
     }
 }
 
