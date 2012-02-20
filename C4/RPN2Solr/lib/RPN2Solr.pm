@@ -81,12 +81,24 @@ sub search_handler {
     $$args{DATABASES} = ['biblio'] if $$args{DATABASES}[0] ~~ 'Default';
     my @database_list = @{ $$args{DATABASES} };
 
+    say "Searching $$args{QUERY}";
     my $query = RPN2Solr( $$args{QUERY} );
+
+    say "RPN2Solr returns the query $query";
     $query = C4::Search::Query->normalSearch($query);
+
+    say "Requesting Solr with $query";
     my $results = SimpleSearch( $query, {recordtype => join ' OR ', @database_list}, {fl => ["recordtype"]} );
 
-    $$args{HITS} = $$results{pager}{total_entries};
-    $$args{HANDLE} = $results;
+    if ( $results->{error} ) {
+        say "Error occured ($$results{error}), returning 0 result";
+        $$args{HITS} = 0;
+        $$args{HANDLE} = undef;
+    } else {
+        say "We have $$results{pager}{total_entries} results for this query";
+        $$args{HITS} = $$results{pager}{total_entries};
+        $$args{HANDLE} = $results;
+    }
 }
 
 =head2
