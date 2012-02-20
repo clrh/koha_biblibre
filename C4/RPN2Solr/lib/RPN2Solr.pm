@@ -27,7 +27,6 @@ use C4::Biblio;
 use C4::Search;
 use C4::AuthoritiesMarc;
 use Regexp::Grammars::Z3950::RPN;
-use Modern::Perl;
 use C4::Search::Query;
 use base 'Exporter';
 our @EXPORT_OK = qw/ construct_string_from_node RPN2Solr /;
@@ -82,12 +81,24 @@ sub search_handler {
     $$args{DATABASES} = ['biblio'] if $$args{DATABASES}[0] ~~ 'Default';
     my @database_list = @{ $$args{DATABASES} };
 
+    say "Searching $$args{QUERY}";
     my $query = RPN2Solr( $$args{QUERY} );
+
+    say "RPN2Solr returns the query $query";
     $query = C4::Search::Query->normalSearch($query);
+
+    say "Requesting Solr with $query";
     my $results = SimpleSearch( $query, {recordtype => join ' OR ', @database_list}, {fl => ["recordtype"]} );
 
-    $$args{HITS} = $$results{pager}{total_entries};
-    $$args{HANDLE} = $results;
+    if ( $results->{error} ) {
+        say "Error occured ($$results{error}), returning 0 result";
+        $$args{HITS} = 0;
+        $$args{HANDLE} = undef;
+    } else {
+        say "We have $$results{pager}{total_entries} results for this query";
+        $$args{HITS} = $$results{pager}{total_entries};
+        $$args{HANDLE} = $results;
+    }
 }
 
 =head2
@@ -98,7 +109,7 @@ sub fetch_handler {
 
     my $set_id = $$args{SETNAME};
     my $offset = $$args{OFFSET};
-    
+
     my $number_of_hits = $$args{HANDLE}{pager}{total_entries};
 
     my $item = @{ $$args{HANDLE}{items} }[$offset - 1];
@@ -165,7 +176,7 @@ sub get_operator {
 =cut
 sub construct_string_from_node {
     my $node = shift;
-    
+
     my @string;
     my $value = $$node{term};
     my $index = C4::Search::Query::getIndexName(1016);
@@ -239,10 +250,10 @@ sub construct_string_from_node {
             # <
             when ( 1 ) { push @string, "$index:[* TO $value]"; }
             when ( 2 ) { push @string, "$index:[* TO $value]"; }
-            
+
             # =
             when ( 3 ) { push @string, "$index:$value";        }
-            
+
             # >
             when ( 4 ) { push @string, "$index:[$value TO *]"; }
             when ( 5 ) { push @string, "$index:[$value TO *]"; }
@@ -266,7 +277,7 @@ sub RPN2Solr {
         my %root = %/;
 
         my $subquery_node = $root{query}{subquery}; # Get the subquery node
-        
+
         # Contruct node and return Solr query
         my $solr_query = construct_string_from_node($subquery_node);
 
@@ -275,14 +286,14 @@ sub RPN2Solr {
     }
 }
 
-sub init_handler {
-        my $args = shift;
-
-        $args->{IMP_NAME} = "Z3950-server";
-        $args->{IMP_VER} = "0.1";
-        $args->{ERR_CODE} = 0;
-
-}
+#sub init_handler {
+#        my $args = shift;
+#
+#        $args->{IMP_NAME} = "Z3950-server";
+#        $args->{IMP_VER} = "0.1";
+#        $args->{ERR_CODE} = 0;
+#
+#}
 
 my $z = new Net::Z3950::SimpleServer(
     SEARCH => \&search_handler,

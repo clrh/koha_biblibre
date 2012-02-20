@@ -111,7 +111,7 @@ test_output
 
 test_output
 ( q{@and @and bang @and @or @attr 2=3 @attr 1=4 "foo bar" @attr 1=4 "bar foo" @attr 2=6 @attr 1=4 "foo foo" @attr 2=5 @attr 1=1003 middle}
-, "( ( all_fields:'bang' AND ( ( $titleindex:'foo bar' OR $titleindex:'bar foo' ) AND !$titleindex:'foo foo' ) ) AND ste_author:['middle' TO *] )"
+, "( ( all_fields:'bang' AND ( ( $titleindex:'foo bar' OR $titleindex:'bar foo' ) AND !$titleindex:'foo foo' ) ) AND $authorindex:['middle' TO *] )"
 , "more complex query with relation attributes"
 );
 
