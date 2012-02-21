@@ -162,7 +162,9 @@ foreach my $barcode (@barcodes) {
         }
     }
     if ( !$returned || $messages ) {
-        $failedreturn .= "&failedreturn=$barcode&returnerror=" . encode_json($messages);
+        my $returnerror = encode_json($messages);
+        $returnerror =~ s/&/%26/g;
+        $failedreturn .= "&failedreturn=$barcode&returnerror=$returnerror";
     }
 }
 
