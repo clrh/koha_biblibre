@@ -1,3 +1,18 @@
+<script type="text/javascript">
+//<![CDATA[
+    $(document).ready(function(){
+        $("#searchsubmit").attr("been_submitted", "");
+        $("#searchsubmit").click(function() {
+            if ( $(this).attr("been_submitted") ) {
+                return false;
+            }
+            $(this).attr("been_submitted", "true");
+            $(this).val(_("Please wait..."));
+        } );
+    });
+//]]>
+</script>
+
 <div id="header-wrapper"><div id="members">
   <!-- TMPL_IF NAME="opacuserlogin" -->
 	<ul>

@@ -41,9 +41,25 @@ YAHOO.util.Event.onContentReady("header_search", function() {
         //this.oAutoComp.queryDelay = 1;
         this.oAutoComp.formatResult = this.fnCustomFormatter;
 }
-});    
+});
 //]]>
 </script><!-- /TMPL_IF --><!-- /TMPL_IF -->
+
+<script type="text/javascript">
+//<![CDATA[
+    $(document).ready(function(){
+        $("#searchsubmit").attr("been_submitted", "");
+        $("#searchsubmit").click(function() {
+            if ( $(this).attr("been_submitted") ) {
+                return false;
+            }
+            $(this).attr("been_submitted", "true");
+            $(this).val(_("Please wait..."));
+        } );
+    });
+//]]>
+</script>
+
 <div id="header_search">
 	<!-- TMPL_IF NAME="CAN_user_circulate" -->
 	<div id="circ_search" class="residentsearch" style="display:none;">
