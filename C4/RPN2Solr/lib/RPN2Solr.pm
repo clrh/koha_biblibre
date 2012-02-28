@@ -82,7 +82,24 @@ sub search_handler {
     my @database_list = @{ $$args{DATABASES} };
 
     say "Searching $$args{QUERY}";
-    my $query = RPN2Solr( $$args{QUERY} );
+    my $query;
+    eval { $query = RPN2Solr( $$args{QUERY} ) };
+    if ( $@ ) {
+        my $err = $@;
+        chomp $err;
+        say "Error occured ($err), returning 0 result";
+        say "Problem with query $$args{QUERY}";
+        $$args{HITS} = 0;
+        $$args{HANDLE} = undef;
+        if ( $err =~ /Timed out/ ) {
+            $$args{ERR_CODE} = 1041;
+            $$args{ERR_STR} = $err;
+        } else {
+            $$args{ERR_CODE} = 3; # unsupported search
+            $$args{ERR_STR} = $err;
+        }
+        return;
+    }
 
     say "RPN2Solr returns the query $query";
     $query = C4::Search::Query->normalSearch($query);
@@ -94,6 +111,8 @@ sub search_handler {
         say "Error occured ($$results{error}), returning 0 result";
         $$args{HITS} = 0;
         $$args{HANDLE} = undef;
+        $$args{ERR_CODE} = 3;
+        $$args{ERR_STR} = $$results{error};
     } else {
         say "We have $$results{pager}{total_entries} results for this query";
         $$args{HITS} = $$results{pager}{total_entries};
@@ -273,7 +292,6 @@ sub RPN2Solr {
     chomp $query;
 
     if ( $query =~ /$parse_rpn{query}/ ) {
-
         my %root = %/;
 
         my $subquery_node = $root{query}{subquery}; # Get the subquery node
@@ -284,6 +302,10 @@ sub RPN2Solr {
         return $solr_query;
 
     }
+    my $err;
+    $err = $![0] if @!;
+    $err = "Unparsable query" unless @!;
+    die "$err\n";
 }
 
 #sub init_handler {
