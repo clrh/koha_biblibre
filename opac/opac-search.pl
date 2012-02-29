@@ -194,7 +194,7 @@ if ( $itype_or_ccode ne 'ccode') {
         push @itemtypesloop, \%row;
     }
 } else {
-    my $advsearchtypes = GetAuthorisedValues($advanced_search_types);
+    my $advsearchtypes = GetAuthorisedValues($advanced_search_types, undef, 1);
     for my $thisitemtype ( sort { $a->{'lib'} cmp $b->{'lib'} } @$advsearchtypes ) {
         my $selected = grep {$_ eq $thisitemtype} @itypes;
         my %row = (
